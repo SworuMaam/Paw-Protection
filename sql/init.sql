@@ -87,3 +87,29 @@ INSERT INTO pets (
   '{"children": true, "otherPets": true, "apartments": false}',
   250
 );
+
+-- Add user_preferences table
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  species TEXT[] DEFAULT '{}',
+  breeds TEXT[] DEFAULT '{}',
+  size TEXT[] DEFAULT '{}',
+  age_range INTEGER[] DEFAULT '{0,15}',
+  gender TEXT[] DEFAULT '{}',
+  temperament TEXT[] DEFAULT '{}',
+  activity_level TEXT[] DEFAULT '{}',
+  special_needs BOOLEAN DEFAULT FALSE,
+  housing_type VARCHAR(100),
+  yard_size VARCHAR(100),
+  experience_level VARCHAR(100),
+  time_available VARCHAR(100),
+  location JSONB,
+  max_distance INTEGER DEFAULT 50,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- Add index for better performance
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
