@@ -21,10 +21,9 @@ export interface RegisterPayload {
   email: string;
   password: string;
   location?: string;
+  contactNumber: string;
   isFosterParent: boolean;
-  fosterAddress?: string;
   fosterCapacity?: number;
-  fosterPreferredSpecies?: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

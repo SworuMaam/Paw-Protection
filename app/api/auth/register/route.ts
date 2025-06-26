@@ -5,32 +5,24 @@ import pool from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     const {
-      name,
-      email,
-      password,
-      location,
-      preferences,
-      isFosterParent,
-      fosterAddress,
-      fosterCapacity,
-      fosterPreferredSpecies,
-    } = await request.json();
+  name,
+  email,
+  password,
+  location,
+  isFosterParent,
+  fosterCapacity,
+  contactNumber,
+} = await request.json();
 
     // Basic validation
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Name, email, and password are required' }, { status: 400 });
-    }
+    if (!name || !email || !password || !contactNumber) {
+  return NextResponse.json({ error: 'Name, email, password, and contact number are required.' }, { status: 400 });
+}
 
     // Backend validation for foster-specific fields
-    if (isFosterParent) {
-      if (!fosterAddress || !fosterCapacity) {
-        return NextResponse.json({ error: 'Foster address and capacity are required for foster parents.' }, { status: 400 });
-      }
-      // TODO make validation of number in the input field , NOT HERE
-      if (typeof fosterCapacity !== 'number' || fosterCapacity < 1) {
-        return NextResponse.json({ error: 'Foster capacity must be a number greater than 0.' }, { status: 400 });
-      }
-    }
+    if (isFosterParent && (!fosterCapacity || typeof fosterCapacity !== 'number' || fosterCapacity < 1)) {
+  return NextResponse.json({ error: 'Foster capacity must be a number > 0.' }, { status: 400 });
+}
 
     const role = isFosterParent ? 'foster-user' : 'user';
     const hashedPassword = await hashPassword(password);
@@ -47,22 +39,20 @@ export async function POST(request: NextRequest) {
       }
 
       const result = await client.query(
-        `INSERT INTO users 
-            (name, email, password, location, preferences, role, foster_address, foster_capacity, foster_preferred_species) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-           RETURNING id, name, email, location, preferences, role, created_at`,
-        [
-          name,
-          email,
-          hashedPassword,
-          location,
-          preferences,
-          role,
-          isFosterParent ? fosterAddress : null,
-          isFosterParent ? Number(fosterCapacity) : null,
-          isFosterParent ? fosterPreferredSpecies : null, // pg driver handles JS array to PG array conversion
-        ]
-      );
+  `INSERT INTO users 
+    (name, email, password, location, contact_number, role, foster_capacity) 
+   VALUES ($1, $2, $3, $4, $5, $6, $7) 
+   RETURNING id, name, email, location, contact_number, role, foster_capacity, created_at`,
+  [
+    name,
+    email,
+    hashedPassword,
+    location,
+    contactNumber,
+    role,
+    isFosterParent ? Number(fosterCapacity) : null,
+  ]
+);
 
       const newUser = result.rows[0];
       const token = await generateToken({ // Await the async token generation
@@ -80,7 +70,6 @@ export async function POST(request: NextRequest) {
             name: newUser.name,
             email: newUser.email,
             location: newUser.location,
-            preferences: newUser.preferences,
             createdAt: newUser.created_at,
             role: newUser.role,
           },

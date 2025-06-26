@@ -8,18 +8,14 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  role user_role NOT NULL DEFAULT 'user', -- New: Role for the user (admin, user, foster-user)
-  location VARCHAR(255), -- General user location (e.g., city/state for non-foster users)
-  preferences JSONB, -- General user preferences (non-foster specific)
-  -- New: Foster-specific fields (only populated if role is 'foster-user')
-  foster_capacity INTEGER, -- Max number of pets a foster can take
-  foster_preferred_species TEXT[], -- e.g., ARRAY['Dog', 'Cat']
-  foster_preferred_size TEXT[],    -- e.g., ARRAY['Small', 'Medium']
-  foster_location_coordinates POINT, -- Specific coordinates for foster home
-  foster_address TEXT, -- Full address for foster home
+  role user_role NOT NULL DEFAULT 'user',
+  location VARCHAR(255),
+  contact_number VARCHAR(20),
+  foster_capacity INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
 
 -- Create pets table
 CREATE TABLE IF NOT EXISTS pets (

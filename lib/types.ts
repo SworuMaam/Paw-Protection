@@ -6,6 +6,13 @@ import { JwtPayload } from 'jsonwebtoken';
 export interface DecodedTokenPayload extends JwtPayload {
   userId: number;
   email: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin'| 'foster-user';
   name: string;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'user' | 'admin' | 'foster-user';  
 }
