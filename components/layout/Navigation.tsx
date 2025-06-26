@@ -6,19 +6,18 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { 
-  Menu, 
-  Heart, 
-  User, 
-  Settings, 
-  LogOut, 
+import {
+  Menu,
+  User,
+  Settings,
+  LogOut,
   Shield,
   Home,
   Search,
   Star,
   Info,
   Mail,
-  PawPrint
+  PawPrint,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,7 +29,6 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navigationItems = [
-  { href: '/', label: 'Home', icon: Home },
   { href: '/pets', label: 'Find Pets', icon: Search },
   { href: '/about', label: 'About Us', icon: Info },
   { href: '/contact', label: 'Contact', icon: Mail },
@@ -50,13 +48,26 @@ export function Navigation() {
     logout();
     setIsOpen(false);
   };
+  
+  // 🎯 Home link based on role
+  let homeLink = '/';
+  if (isAuthenticated && user?.role) {
+    if (user.role === 'admin') {
+      homeLink = '/admin';
+    } else if (user.role === 'foster-user') {
+      homeLink = '/foster-dashboard';
+    } else {
+      homeLink = '/dashboard';
+    }
+  }
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="page-container">
         <div className="flex h-16 items-center justify-between">
+          
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href={homeLink} className="flex items-center space-x-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <PawPrint className="h-6 w-6 text-primary-foreground" />
             </div>
@@ -65,6 +76,17 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
+            <Link
+              href={homeLink}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                pathname === homeLink
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              }`}
+            >
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </Link>
             {navigationItems.map((item) => (
               <Link
                 key={item.href}
@@ -99,7 +121,7 @@ export function Navigation() {
                     <span>{item.label}</span>
                   </Link>
                 ))}
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -163,6 +185,18 @@ export function Navigation() {
             </SheetTrigger>
             <SheetContent side="right" className="w-72">
               <div className="flex flex-col space-y-4 mt-4">
+                <Link
+                  href={homeLink}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === homeLink
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </Link>
                 {navigationItems.map((item) => (
                   <Link
                     key={item.href}
@@ -178,7 +212,7 @@ export function Navigation() {
                     <span>{item.label}</span>
                   </Link>
                 ))}
-                
+
                 {isAuthenticated ? (
                   <>
                     <div className="border-t pt-4">

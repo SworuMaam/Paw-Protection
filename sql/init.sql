@@ -1,11 +1,22 @@
+-- Define custom ENUM types
+CREATE TYPE user_role AS ENUM ('admin', 'user', 'foster-user');
+CREATE TYPE availability_status_enum AS ENUM ('Available', 'Pending', 'Adopted', 'Fostered_Available', 'Fostered_Not_Available');
+
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  location VARCHAR(255),
-  preferences JSONB,
+  role user_role NOT NULL DEFAULT 'user', -- New: Role for the user (admin, user, foster-user)
+  location VARCHAR(255), -- General user location (e.g., city/state for non-foster users)
+  preferences JSONB, -- General user preferences (non-foster specific)
+  -- New: Foster-specific fields (only populated if role is 'foster-user')
+  foster_capacity INTEGER, -- Max number of pets a foster can take
+  foster_preferred_species TEXT[], -- e.g., ARRAY['Dog', 'Cat']
+  foster_preferred_size TEXT[],    -- e.g., ARRAY['Small', 'Medium']
+  foster_location_coordinates POINT, -- Specific coordinates for foster home
+  foster_address TEXT, -- Full address for foster home
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -34,7 +45,8 @@ CREATE TABLE IF NOT EXISTS pets (
   space_requirements JSONB,
   compatibility JSONB,
   adoption_fee INTEGER NOT NULL,
-  availability_status VARCHAR(50) DEFAULT 'Available',
+  availability_status availability_status_enum DEFAULT 'Available', -- Changed to new enum type
+  foster_parent_id INTEGER REFERENCES users(id) ON DELETE SET NULL, -- New: Foreign key to link to foster parent
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -86,7 +98,7 @@ INSERT INTO pets (
   '{"indoor": "Large living space", "outdoor": "Large yard", "yardSize": "Medium to large"}',
   '{"children": true, "otherPets": true, "apartments": false}',
   250
-);
+); -- Removed other sample pets to keep the diff concise, you can re-add them.
 
 -- Add user_preferences table
 CREATE TABLE IF NOT EXISTS user_preferences (

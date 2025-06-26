@@ -12,7 +12,7 @@ const JWT_SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET!);
 export interface JWTPayload extends jose.JWTPayload { // Extend jose's JWTPayload
   userId: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'foster-user';
   name: string;
   // Add an index signature to allow for additional custom properties if needed by jose
   // Though extending jose.JWTPayload often handles this for known JWT claims,

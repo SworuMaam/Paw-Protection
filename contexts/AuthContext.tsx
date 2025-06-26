@@ -6,12 +6,25 @@ import { User } from '@/types'; // Corrected import path for User interface
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>; // Added user?: User
-  register: (data: { name: string; email: string; password: string; location?: string }) => Promise<{ success: boolean; error?: string; user?: User }>; // Added user?: User
+  register: (data: RegisterPayload) => Promise<{ success: boolean; error?: string; user?: User }>; // Updated to use a detailed payload type
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isFosterUser: boolean; // Added for foster user role
   isUser: boolean;
+}
+
+// Define a more detailed registration payload type
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  location?: string;
+  isFosterParent: boolean;
+  fosterAddress?: string;
+  fosterCapacity?: number;
+  fosterPreferredSpecies?: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (userData: { name: string; email: string; password: string; location?: string }) => {
+  const register = async (userData: RegisterPayload) => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -107,8 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.role === 'admin';
-  const isUser = user?.role === 'user';
+  const isAdmin = user?.role == 'admin';
+  const isUser = user?.role == 'user';
+  const isFosterUser = user?.role == 'foster-user'; // Derived from user role
 
   return (
     <AuthContext.Provider
@@ -119,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isLoading,
         isAuthenticated,
+        isFosterUser, // Include in context value
         isAdmin,
         isUser,
       }}

@@ -38,8 +38,13 @@ export default function LoginPage() {
 
         // The login function has already updated the AuthContext state.
         // We can now navigate to the correct dashboard.
-        const redirectUrl = result?.user?.role === 'admin' ? '/admin' : '/dashboard';
-        // router.push("/dashboard")
+        let redirectUrl = '/dashboard'; // Default to user dashboard
+        if (result?.user?.role === 'admin') {
+          redirectUrl = '/admin';
+        } else if (result?.user?.role === 'foster-user') {
+          redirectUrl = '/foster-dashboard'; // New dashboard for foster users
+        }
+
         router.push(redirectUrl);
       } else {
         setError(result.error || 'Login failed');

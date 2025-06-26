@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT id, email, password, name, location, created_at FROM users WHERE email = $1',
+        'SELECT id, email, password, name, role, location, created_at FROM users WHERE email = $1',
         [email]
       );
 
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       const token = await generateToken({ // Await generateToken
         userId: user.id,
         email: user.email,
-        role: 'user',
+        role: user.role, // Use the role from the database
         name: user.name
       });
 
@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
         success: true,
         user: {
           id: user.id,
-          email: user.email,
-          role: 'user',
+          email: user.email, 
+          role: user.role, // Return the correct role
           name: user.name,
           location: user.location,
           createdAt: user.created_at

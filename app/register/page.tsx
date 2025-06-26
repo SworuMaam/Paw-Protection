@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RegisterPayload } from '@/contexts/AuthContext';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, PawPrint, Eye, EyeOff, MapPin } from 'lucide-react';
+import { Loader2, PawPrint, Eye, EyeOff, MapPin, Home } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function RegisterPage() {
@@ -23,7 +24,11 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     location: '',
-    useCurrentLocation: false,
+    isFosterParent: false, // New state for foster registration
+    // Foster-specific fields
+    fosterAddress: '',
+    fosterCapacity: 1,
+    fosterPreferredSpecies: 'Dogs, Cats',
     agreeTerms: false
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -33,54 +38,81 @@ export default function RegisterPage() {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
+  // Validation
+  if (formData.password !== formData.confirmPassword) {
+    setError('Passwords do not match');
+    setIsLoading(false);
+    return;
+  }
+
+  if (formData.password.length < 6) {
+    setError('Password must be at least 6 characters long');
+    setIsLoading(false);
+    return;
+  }
+
+  if (!formData.agreeTerms) {
+    setError('Please agree to the terms and conditions');
+    setIsLoading(false);
+    return;
+  }
+
+  if (formData.isFosterParent && (!formData.fosterAddress || !formData.fosterCapacity)) {
+    setError('Foster address and capacity are required for foster parents.');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    // Build a payload that matches the RegisterPayload interface in AuthContext
+    const payload: RegisterPayload = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      location: formData.location,
+      isFosterParent: formData.isFosterParent,
+    };
+
+    if (formData.isFosterParent) {
+      payload.fosterAddress = formData.fosterAddress;
+      payload.fosterCapacity = Number(formData.fosterCapacity); // Ensure it's a number
+      payload.fosterPreferredSpecies = formData.fosterPreferredSpecies
+        .split(',')
+        .map(s => s.trim());
     }
+    const result = await register(payload);
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!formData.agreeTerms) {
-      setError('Please agree to the terms and conditions');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const result = await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        location: formData.location
-      });
-      
-      if (result.success) {
-        toast.success('Welcome to Paw Protection!');
-        router.push('/dashboard');
-      } else {
-        setError(result.error || 'Registration failed');
+    // Check the role of user cand redirect to respective dashboard
+    if (result.success) {
+      // Correctly redirect based on the role returned from the backend
+      let redirectUrl = '/dashboard';
+      if (result?.user?.role == 'foster-user') {
+        redirectUrl = '/foster-dashboard';
+      } else if (result.user?.role === 'admin') {
+        redirectUrl = '/admin';
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
+      toast.success(`Welcome, ${result?.user?.role == 'foster-user' ? 'Foster Parent' : 'User'}!`);
+      router.push(redirectUrl);
+    } else {
+      setError(result.error || 'Registration failed');
     }
-  };
+  } catch (err) {
+    setError('An unexpected error occurred');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     }));
     setError('');
   };
@@ -103,8 +135,7 @@ export default function RegisterPage() {
           
           setFormData(prev => ({
             ...prev,
-            location: mockLocation,
-            useCurrentLocation: true
+            location: mockLocation
           }));
           
           toast.success('Location detected successfully');
@@ -267,6 +298,55 @@ export default function RegisterPage() {
                 </p>
               </div>
               
+              {/* Foster Parent Registration Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isFosterParent"
+                    name='isFosterParent'
+                    checked={formData.isFosterParent}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, isFosterParent: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="isFosterParent" className="text-sm font-medium">
+                    I want to register as a Foster Parent
+                  </Label>
+                </div>
+
+                {formData.isFosterParent && (
+                  <div className="space-y-4 p-4 bg-muted/50 rounded-lg animate-in fade-in-50">
+                    <div className="space-y-2">
+                      <Label htmlFor="fosterAddress">Foster Home Address</Label>
+                      <Input
+                        id="fosterAddress"
+                        name="fosterAddress"
+                        type="text"
+                        placeholder="e.g., 123 Main St, Anytown, USA"
+                        value={formData.fosterAddress}
+                        onChange={handleChange}
+                        required={formData.isFosterParent}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="fosterCapacity">Foster Capacity (Number of pets)</Label>
+                      <Input
+                        id="fosterCapacity"
+                        name="fosterCapacity"
+                        type="number"
+                        min="1"
+                        value={formData.fosterCapacity}
+                        onChange={handleChange}
+                        required={formData.isFosterParent}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      More preferences can be set in your foster dashboard later.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="agreeTerms"
