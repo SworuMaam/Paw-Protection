@@ -1,14 +1,8 @@
-'use client';
+// data/pets.ts
 
-import { useState, useEffect } from 'react';
-import { PetCard } from '@/components/pets/PetCard';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import { Pet } from '@/types/pet';
 
-// Mock featured pets data
-const mockFeaturedPets: Pet[] = [
+export const pets: Pet[] = [
   {
     id: '1',
     name: 'Luna',
@@ -138,72 +132,36 @@ const mockFeaturedPets: Pet[] = [
     createdAt: '2025-06-27',
     updatedAt: '2024-01-13T09:15:00Z'
   },
-];
-
-export function FeaturedPets() {
-  const [featuredPets, setFeaturedPets] = useState<Pet[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate API call
-    const fetchFeaturedPets = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setFeaturedPets(mockFeaturedPets);
-      setIsLoading(false);
-    };
-
-    fetchFeaturedPets();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <section className="section-padding bg-muted/50">
-        <div className="page-container">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Featured Pets</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Meet some of our amazing pets waiting for their forever homes
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card rounded-lg p-6 animate-pulse">
-                <div className="bg-muted h-48 rounded-lg mb-4" />
-                <div className="bg-muted h-4 rounded mb-2" />
-                <div className="bg-muted h-4 rounded w-2/3" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
+  {
+    id: '4',
+    name: 'Bella',
+    species: 'Cat',
+    breed: 'Siamese',
+    age: 1,
+    gender: 'Female',
+    size: 'Medium',
+    temperament: ['Playful'],
+    activityLevel: 'High',
+    healthStatus: 'Excellent',
+    adoptionRequirements: ['Interactive play time', 'Mental stimulation'],
+    description: 'Bella is a young Siamese with lots of personality and energy.',
+    images: [
+      'https://images.pexels.com/photos/156934/pexels-photo-156934.jpeg'
+    ],
+    location: {
+      address: 'Kathmandu, Nepal',
+      coordinates: [-122.3321, 47.6062],
+      suitability: ['Normal']
+    },
+    care: {
+      diet: { type: 'High-protein kitten food', frequency: 'Three times daily' },
+      toys: ['Interactive puzzles', 'Laser pointers', 'Climbing trees'],
+      spaceRequirements: { indoor: 'Medium space with vertical climbing' }
+    },
+    compatibility: { children: true, otherPets: false, apartments: true },
+    adoptionFee: 2000,
+    availabilityStatus: 'Available',
+    createdAt: '2025-06-28',
+    updatedAt: '2025-06-12T16:20:00Z'
   }
-
-  return (
-    <section className="section-padding bg-muted/50">
-      <div className="page-container">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Featured Pets</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Meet some of our amazing pets waiting for their forever homes
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {featuredPets.map((pet) => (
-            <PetCard key={pet.id} pet={pet} />
-          ))}
-        </div>
-        
-        <div className="text-center">
-          <Button size="lg" asChild>
-            <Link href="/pets">
-              View All Pets
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
+];

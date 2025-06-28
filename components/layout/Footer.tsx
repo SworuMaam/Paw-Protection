@@ -28,8 +28,8 @@ const footerLinks = {
 
 const contactInfo = {
   email: 'hello@pawprotection.com',
-  phone: '+1 (555) 123-4567',
-  address: '123 Pet Street, Animal City, AC 12345',
+  phone: '+977 9841541254',
+  address: 'Basantapur, Kathmandu',
 };
 
 const socialLinks = [
@@ -57,7 +57,7 @@ export function Footer() {
             </p>
             
             {/* Newsletter Signup */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <h4 className="font-semibold">Stay Updated</h4>
               <div className="flex space-x-2">
                 <Input
@@ -67,7 +67,7 @@ export function Footer() {
                 />
                 <Button size="sm">Subscribe</Button>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Links Sections */}
@@ -152,7 +152,7 @@ export function Footer() {
         {/* Bottom Footer */}
         <div className="border-t py-6 flex flex-col sm:flex-row items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            © 2024 Paw Protection. All rights reserved.
+            © 2025 Paw Protection. All rights reserved.
           </p>
           
           {/* Social Links */}

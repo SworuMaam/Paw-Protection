@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Heart, MapPin, Calendar, User } from 'lucide-react';
-import { Pet } from '@/types/pet';
-import { useState } from 'react';
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Heart, MapPin, Calendar, User } from "lucide-react";
+import { Pet } from "@/types/pet";
+import { useState } from "react";
 
 interface PetCardProps {
   pet: Pet;
@@ -24,8 +24,8 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
   };
 
   const getAgeText = (age: number) => {
-    if (age < 1) return 'Puppy/Kitten';
-    if (age === 1) return '1 year';
+    if (age < 1) return "Puppy/Kitten";
+    if (age === 1) return "1 year";
     return `${age} years`;
   };
 
@@ -46,11 +46,13 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
               <div className="w-full h-full bg-muted flex items-center justify-center">
                 <div className="text-center">
                   <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No image available</p>
+                  <p className="text-sm text-muted-foreground">
+                    No image available
+                  </p>
                 </div>
               </div>
             )}
-            
+
             {/* Favorite Button */}
             {showFavorite && (
               <Button
@@ -61,21 +63,23 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
               >
                 <Heart
                   className={`h-4 w-4 ${
-                    isFavorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground'
+                    isFavorited
+                      ? "fill-red-500 text-red-500"
+                      : "text-muted-foreground"
                   }`}
                 />
               </Button>
             )}
-            
+
             {/* Status Badge */}
             <div className="absolute top-3 left-3">
               <Badge
                 variant={
-                  pet.availabilityStatus === 'Available'
-                    ? 'default'
-                    : pet.availabilityStatus === 'Pending'
-                    ? 'secondary'
-                    : 'outline'
+                  pet.availabilityStatus === "Available"
+                    ? "default"
+                    : pet.availabilityStatus === "Pending"
+                    ? "secondary"
+                    : "outline"
                 }
                 className="shadow-sm"
               >
@@ -83,7 +87,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
               </Badge>
             </div>
           </div>
-          
+
           <CardContent className="p-6">
             {/* Pet Info */}
             <div className="space-y-3">
@@ -95,7 +99,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                   {pet.breed} • {pet.species}
                 </p>
               </div>
-              
+
               {/* Quick Stats */}
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
@@ -111,7 +115,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                   {pet.location.address}
                 </div>
               </div>
-              
+
               {/* Temperament Tags */}
               <div className="flex flex-wrap gap-1">
                 {pet.temperament.slice(0, 3).map((trait) => (
@@ -125,19 +129,24 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                   </Badge>
                 )}
               </div>
-              
+
               {/* Description */}
               <p className="text-sm text-muted-foreground line-clamp-2">
                 {pet.description}
               </p>
-              
+
               {/* Adoption Fee */}
               <div className="flex items-center justify-between pt-2 border-t">
                 <div className="text-lg font-semibold text-primary">
-                  ${pet.adoptionFee}
+                  Rs.{pet.adoptionFee}
                 </div>
-                <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  Learn More
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  asChild
+                >
+                  <Link href={`/pets/${pet.id}`}>Learn More</Link>
                 </Button>
               </div>
             </div>

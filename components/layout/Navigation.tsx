@@ -48,24 +48,18 @@ export function Navigation() {
     logout();
     setIsOpen(false);
   };
-  
-  // 🎯 Home link based on role
+
   let homeLink = '/';
   if (isAuthenticated && user?.role) {
-    if (user.role === 'admin') {
-      homeLink = '/admin';
-    } else if (user.role === 'foster-user') {
-      homeLink = '/foster-dashboard';
-    } else {
-      homeLink = '/dashboard';
-    }
+    if (user.role === 'admin') homeLink = '/admin';
+    else if (user.role === 'foster-user') homeLink = '/foster-dashboard';
+    else homeLink = '/dashboard';
   }
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="page-container">
         <div className="flex h-16 items-center justify-between">
-          
           {/* Logo */}
           <Link href={homeLink} className="flex items-center space-x-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
@@ -103,24 +97,25 @@ export function Navigation() {
             ))}
           </div>
 
-          {/* User Menu / Auth Buttons */}
+          {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                {userMenuItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      pathname === item.href
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
+                {user?.role === 'user' &&
+                  userMenuItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        pathname === item.href
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -214,9 +209,9 @@ export function Navigation() {
                 ))}
 
                 {isAuthenticated ? (
-                  <>
-                    <div className="border-t pt-4">
-                      {userMenuItems.map((item) => (
+                  <div className="border-t pt-4">
+                    {user?.role === 'user' &&
+                      userMenuItems.map((item) => (
                         <Link
                           key={item.href}
                           href={item.href}
@@ -231,33 +226,32 @@ export function Navigation() {
                           <span>{item.label}</span>
                         </Link>
                       ))}
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                    {isAdmin && (
                       <Link
-                        href="/profile"
+                        href="/admin"
                         onClick={() => setIsOpen(false)}
                         className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                       >
-                        <User className="h-4 w-4" />
-                        <span>Profile</span>
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Panel</span>
                       </Link>
-                      {isAdmin && (
-                        <Link
-                          href="/admin"
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-                        >
-                          <Shield className="h-4 w-4" />
-                          <span>Admin Panel</span>
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-50"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Log out</span>
-                      </button>
-                    </div>
-                  </>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Log out</span>
+                    </button>
+                  </div>
                 ) : (
                   <div className="border-t pt-4 space-y-2">
                     <Button variant="ghost" className="w-full justify-start" asChild>

@@ -1,169 +1,205 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { PetCard } from '@/components/pets/PetCard';
-import { PetFilters } from '@/components/pets/PetFilters';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, Grid, List } from 'lucide-react';
-import { Pet } from '@/types/pet';
+import { useState, useEffect } from "react";
+import { PetCard } from "@/components/pets/PetCard";
+import { PetFilters } from "@/components/pets/PetFilters";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Filter, Grid, List } from "lucide-react";
+import { Pet } from "@/types/pet";
 
 // Mock pets data
 const mockPets: Pet[] = [
   {
-    id: '1',
-    name: 'Luna',
-    species: 'Dog',
-    breed: 'Golden Retriever',
+    id: "1",
+    name: "Luna",
+    species: "Dog",
+    breed: "Golden Retriever",
     age: 3,
-    gender: 'Female',
-    size: 'Large',
-    temperament: ['Friendly', 'Energetic', 'Loyal'],
-    activityLevel: 'High',
-    healthStatus: 'Excellent',
-    adoptionRequirements: ['Fenced yard', 'Experience with large dogs'],
-    description: 'Luna is a beautiful Golden Retriever who loves playing fetch and swimming. She\'s great with kids and other dogs.',
+    gender: "Female",
+    size: "Large",
+    temperament: ["Friendly", "Energetic", "Loyal"],
+    activityLevel: "High",
+    healthStatus: "Excellent",
+    adoptionRequirements: ["Fenced yard", "Experience with large dogs"],
+    description:
+      "Luna is a beautiful Golden Retriever who loves playing fetch and swimming.",
     images: [
-      'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg',
-      'https://images.pexels.com/photos/160846/french-bulldog-summer-smile-joy-160846.jpeg'
+      "https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg",
+      "https://images.pexels.com/photos/160846/french-bulldog-summer-smile-joy-160846.jpeg",
     ],
     location: {
-      address: 'San Francisco, CA',
+      address: "Patan, Lalitpur",
       coordinates: [-122.4194, 37.7749],
-      suitability: ['Urban', 'Suburban']
+      suitability: ["Urban", "Suburban"],
     },
     care: {
-      diet: { type: 'High-quality dry food', frequency: 'Twice daily' },
-      toys: ['Tennis balls', 'Rope toys', 'Frisbee'],
+      diet: {
+        type: "High-quality dry food",
+        frequency: "Twice daily",
+      },
+      toys: ["Tennis balls", "Rope toys", "Frisbee"],
       spaceRequirements: {
-        indoor: 'Large living space',
-        outdoor: 'Large yard',
-        yardSize: 'Medium to large'
-      }
+        indoor: "Large living space",
+        outdoor: "Large yard",
+        yardSize: "Medium to large",
+      },
     },
-    compatibility: { children: true, otherPets: true, apartments: false },
+    compatibility: {
+      children: true,
+      otherPets: true,
+      apartments: false,
+    },
     adoptionFee: 250,
-    availabilityStatus: 'Available',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z'
+    availabilityStatus: "Available",
+    createdAt: "2025-06-27",
+    updatedAt: "2024-01-15T10:00:00Z",
   },
   {
-    id: '2',
-    name: 'Whiskers',
-    species: 'Cat',
-    breed: 'Maine Coon',
+    id: "2",
+    name: "Whiskers",
+    species: "Cat",
+    breed: "Maine Coon",
     age: 2,
-    gender: 'Male',
-    size: 'Large',
-    temperament: ['Calm', 'Affectionate', 'Independent'],
-    activityLevel: 'Moderate',
-    healthStatus: 'Good',
-    adoptionRequirements: ['Indoor only', 'Regular grooming'],
-    description: 'Whiskers is a gentle giant who loves cuddling and watching birds from the window.',
+    gender: "Male",
+    size: "Large",
+    temperament: ["Calm", "Affectionate", "Independent"],
+    activityLevel: "Moderate",
+    healthStatus: "Good",
+    adoptionRequirements: ["Indoor only", "Regular grooming"],
+    description:
+      "Whiskers is a gentle giant who loves cuddling and watching birds from the window.",
     images: [
-      'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg',
-      'https://images.pexels.com/photos/320014/pexels-photo-320014.jpeg'
+      "https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg",
+      "https://images.pexels.com/photos/320014/pexels-photo-320014.jpeg",
     ],
     location: {
-      address: 'Portland, OR',
+      address: "Kirtipur, Kathmandu",
       coordinates: [-122.6784, 45.5152],
-      suitability: ['Urban', 'Suburban', 'Rural']
+      suitability: ["Urban", "Suburban", "Rural"],
     },
     care: {
-      diet: { type: 'Premium wet and dry food', frequency: 'Three times daily' },
-      toys: ['Feather wands', 'Catnip mice', 'Scratching posts'],
-      spaceRequirements: { indoor: 'Medium apartment or larger' }
-    },
-    compatibility: { children: true, otherPets: true, apartments: true },
-    adoptionFee: 150,
-    availabilityStatus: 'Available',
-    createdAt: '2024-01-14T14:30:00Z',
-    updatedAt: '2024-01-14T14:30:00Z'
-  },
-  {
-    id: '3',
-    name: 'Buddy',
-    species: 'Dog',
-    breed: 'Mixed Breed',
-    age: 5,
-    gender: 'Male',
-    size: 'Medium',
-    temperament: ['Gentle', 'Loyal', 'Calm'],
-    activityLevel: 'Moderate',
-    healthStatus: 'Good',
-    adoptionRequirements: ['Patient family', 'No small children'],
-    description: 'Buddy is a sweet senior dog looking for a quiet home to spend his golden years.',
-    images: [
-      'https://images.pexels.com/photos/1254140/pexels-photo-1254140.jpeg',
-      'https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg'
-    ],
-    location: {
-      address: 'Austin, TX',
-      coordinates: [-97.7431, 30.2672],
-      suitability: ['Urban', 'Suburban']
-    },
-    care: {
-      diet: { type: 'Senior dog formula', frequency: 'Twice daily' },
-      toys: ['Soft chew toys', 'Comfort blankets'],
+      diet: {
+        type: "Premium wet and dry food",
+        frequency: "Three times daily",
+      },
+      toys: ["Feather wands", "Catnip mice", "Scratching posts"],
       spaceRequirements: {
-        indoor: 'Small to medium space',
-        outdoor: 'Small yard or regular walks'
-      }
+        indoor: "Medium apartment or larger",
+      },
     },
-    compatibility: { children: false, otherPets: true, apartments: true },
-    adoptionFee: 100,
-    availabilityStatus: 'Available',
-    createdAt: '2024-01-13T09:15:00Z',
-    updatedAt: '2024-01-13T09:15:00Z'
+    compatibility: {
+      children: true,
+      otherPets: true,
+      apartments: true,
+    },
+    adoptionFee: 15000,
+    availabilityStatus: "Available",
+    createdAt: "2025-06-28",
+    updatedAt: "2024-01-14T14:30:00Z",
   },
   {
-    id: '4',
-    name: 'Bella',
-    species: 'Cat',
-    breed: 'Siamese',
-    age: 1,
-    gender: 'Female',
-    size: 'Medium',
-    temperament: ['Playful', 'Vocal', 'Intelligent'],
-    activityLevel: 'High',
-    healthStatus: 'Excellent',
-    adoptionRequirements: ['Interactive play time', 'Mental stimulation'],
-    description: 'Bella is a young Siamese with lots of personality and energy.',
+    id: "3",
+    name: "Buddy",
+    species: "Dog",
+    breed: "Mixed Breed",
+    age: 5,
+    gender: "Male",
+    size: "Medium",
+    temperament: ["Gentle", "Loyal", "Calm"],
+    activityLevel: "Moderate",
+    healthStatus: "Good",
+    adoptionRequirements: ["Patient family", "No small children"],
+    description:
+      "Buddy is a sweet senior dog looking for a quiet home to spend his golden years.",
     images: [
-      'https://images.pexels.com/photos/156934/pexels-photo-156934.jpeg'
+      "https://images.pexels.com/photos/1254140/pexels-photo-1254140.jpeg",
+      "https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg",
     ],
     location: {
-      address: 'Seattle, WA',
-      coordinates: [-122.3321, 47.6062],
-      suitability: ['Urban', 'Suburban']
+      address: "Austin, TX",
+      coordinates: [-97.7431, 30.2672],
+      suitability: ["Bhaktapur"],
     },
     care: {
-      diet: { type: 'High-protein kitten food', frequency: 'Three times daily' },
-      toys: ['Interactive puzzles', 'Laser pointers', 'Climbing trees'],
-      spaceRequirements: { indoor: 'Medium space with vertical climbing' }
+      diet: {
+        type: "Senior dog formula",
+        frequency: "Twice daily",
+      },
+      toys: ["Soft chew toys", "Comfort blankets"],
+      spaceRequirements: {
+        indoor: "Small to medium space",
+        outdoor: "Small yard or regular walks",
+      },
+    },
+    compatibility: {
+      children: false,
+      otherPets: true,
+      apartments: true,
+    },
+    adoptionFee: 10000,
+    availabilityStatus: "Available",
+    createdAt: "2025-06-27",
+    updatedAt: "2024-01-13T09:15:00Z",
+  },
+  {
+    id: "4",
+    name: "Bella",
+    species: "Cat",
+    breed: "Siamese",
+    age: 1,
+    gender: "Female",
+    size: "Medium",
+    temperament: ["Playful", "Vocal", "Intelligent"],
+    activityLevel: "High",
+    healthStatus: "Excellent",
+    adoptionRequirements: ["Interactive play time", "Mental stimulation"],
+    description:
+      " is a young Siamese with lots Bellaof personality and energy.",
+    images: [
+      "https://images.pexels.com/photos/156934/pexels-photo-156934.jpeg",
+    ],
+    location: {
+      address: "Kathmandu, Nepal",
+      coordinates: [27.69913199083734, 85.30755976707229],
+      suitability: ["Normal "],
+    },
+    care: {
+      diet: {
+        type: "Highkitten food-protein ",
+        frequency: "Three times daily",
+      },
+      toys: ["Interactive puzzles", "Laser pointers", "Climbing trees"],
+      spaceRequirements: { indoor: "Small apartment" },
     },
     compatibility: { children: true, otherPets: false, apartments: true },
-    adoptionFee: 175,
-    availabilityStatus: 'Available',
-    createdAt: '2024-01-12T16:20:00Z',
-    updatedAt: '2024-01-12T16:20:00Z'
-  }
+    adoptionFee: 2000,
+    availabilityStatus: "Available",
+    createdAt: "2025-06-12T16:20:00Z",
+    updatedAt: "2025-06-12T16:20:00Z",
+  },
 ];
 
 export default function PetsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [filteredPets, setFilteredPets] = useState<Pet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     // Simulate API call
     const fetchPets = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setPets(mockPets);
       setFilteredPets(mockPets);
       setIsLoading(false);
@@ -173,27 +209,34 @@ export default function PetsPage() {
   }, []);
 
   useEffect(() => {
-    let filtered = pets.filter(pet =>
-      pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pet.breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pet.species.toLowerCase().includes(searchTerm.toLowerCase())
+    let filtered = pets.filter(
+      (pet) =>
+        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pet.breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pet.species.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Sort pets
     switch (sortBy) {
-      case 'newest':
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case "newest":
+        filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
         break;
-      case 'oldest':
-        filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      case "oldest":
+        filtered.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
         break;
-      case 'name':
+      case "name":
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case 'age':
+      case "age":
         filtered.sort((a, b) => a.age - b.age);
         break;
-      case 'fee':
+      case "fee":
         filtered.sort((a, b) => a.adoptionFee - b.adoptionFee);
         break;
     }
@@ -206,29 +249,32 @@ export default function PetsPage() {
 
     // Apply search
     if (searchTerm) {
-      filtered = filtered.filter(pet =>
-        pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pet.breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pet.species.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (pet) =>
+          pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pet.breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pet.species.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply filters
     if (filters.species?.length > 0) {
-      filtered = filtered.filter(pet => filters.species.includes(pet.species));
+      filtered = filtered.filter((pet) =>
+        filters.species.includes(pet.species)
+      );
     }
 
     if (filters.size?.length > 0) {
-      filtered = filtered.filter(pet => filters.size.includes(pet.size));
+      filtered = filtered.filter((pet) => filters.size.includes(pet.size));
     }
 
     if (filters.gender?.length > 0) {
-      filtered = filtered.filter(pet => filters.gender.includes(pet.gender));
+      filtered = filtered.filter((pet) => filters.gender.includes(pet.gender));
     }
 
     if (filters.ageRange) {
       const [min, max] = filters.ageRange;
-      filtered = filtered.filter(pet => pet.age >= min && pet.age <= max);
+      filtered = filtered.filter((pet) => pet.age >= min && pet.age <= max);
     }
 
     setFilteredPets(filtered);
@@ -241,7 +287,7 @@ export default function PetsPage() {
           <div className="h-8 bg-muted rounded w-1/3" />
           <div className="h-12 bg-muted rounded" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map(i => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="bg-card rounded-lg p-6">
                 <div className="bg-muted h-48 rounded mb-4" />
                 <div className="bg-muted h-4 rounded mb-2" />
@@ -276,7 +322,7 @@ export default function PetsPage() {
               className="pl-10"
             />
           </div>
-          
+
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -286,7 +332,7 @@ export default function PetsPage() {
               <Filter className="h-4 w-4" />
               Filters
             </Button>
-            
+
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -299,20 +345,20 @@ export default function PetsPage() {
                 <SelectItem value="fee">Adoption Fee</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <div className="flex border rounded-md">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 className="rounded-r-none"
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className="rounded-l-none"
               >
                 <List className="h-4 w-4" />
@@ -322,9 +368,7 @@ export default function PetsPage() {
         </div>
 
         {/* Filters */}
-        {showFilters && (
-          <PetFilters onFiltersChange={handleFiltersChange} />
-        )}
+        {showFilters && <PetFilters onFiltersChange={handleFiltersChange} />}
       </div>
 
       {/* Results */}
@@ -336,11 +380,13 @@ export default function PetsPage() {
 
       {/* Pets Grid */}
       {filteredPets.length > 0 ? (
-        <div className={`grid gap-6 ${
-          viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-            : 'grid-cols-1'
-        }`}>
+        <div
+          className={`grid gap-6 ${
+            viewMode === "grid"
+              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-1"
+          }`}
+        >
           {filteredPets.map((pet) => (
             <PetCard key={pet.id} pet={pet} showFavorite={true} />
           ))}

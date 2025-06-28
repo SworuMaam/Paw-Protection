@@ -13,7 +13,7 @@ export default function HomePage() {
       <FeaturedPets />
       <HowItWorks />
       <Statistics />
-      <Testimonials />
+      {/* <Testimonials /> */}
     </>
   );
 }

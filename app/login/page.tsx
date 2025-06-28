@@ -165,13 +165,13 @@ export default function LoginPage() {
             </div>
 
             {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+            {/* <div className="mt-6 p-4 bg-muted/50 rounded-lg">
               <p className="text-sm font-medium mb-2">Demo Credentials:</p>
               <div className="text-xs space-y-1 text-muted-foreground">
                 <p><strong>Admin:</strong> admin@pawprotection.com / admin123secure</p>
                 <p><strong>User:</strong> Register a new account or use existing credentials</p>
               </div>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>
