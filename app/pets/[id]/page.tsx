@@ -1,6 +1,6 @@
-import { pets } from '@/data/pets';
-import { Pet } from '@/types/pet';
+import db from '@/lib/db';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 interface PetDetailsProps {
   params: {
@@ -8,19 +8,22 @@ interface PetDetailsProps {
   };
 }
 
-export default function PetDetails({ params }: PetDetailsProps) {
+export default async function PetDetails({ params }: PetDetailsProps) {
   const id = params.id;
-  const pet: Pet | undefined = pets.find((p) => p.id === id);
+
+  const res = await db.query(
+    `SELECT 
+      id, name, species, breed, age, gender, size, temperament, 
+      activity_level, description, image, location_address, 
+      adoption_fee, availability_status, created_at 
+    FROM pets WHERE id = $1`,
+    [id]
+  );
+
+  const pet = res.rows[0];
 
   if (!pet) {
-    return (
-      <div className="page-container py-8">
-        <h1 className="text-3xl font-bold mb-4">Pet Not Found</h1>
-        <Link href="/pets" className="text-primary underline">
-          ← Back to Pets
-        </Link>
-      </div>
-    );
+    return notFound();
   }
 
   return (
@@ -30,7 +33,11 @@ export default function PetDetails({ params }: PetDetailsProps) {
       <h1 className="text-4xl font-bold">{pet.name}</h1>
       <div className="grid md:grid-cols-2 gap-8">
         {/* Image */}
-        <img src={pet.images[0]} alt={pet.name} className="rounded-lg w-full max-h-[400px] object-cover" />
+        <img
+          src={pet.image}
+          alt={pet.name}
+          className="rounded-lg w-full max-h-[400px] object-cover"
+        />
 
         {/* Basic Info */}
         <div className="space-y-4">
@@ -39,11 +46,10 @@ export default function PetDetails({ params }: PetDetailsProps) {
           <p><strong>Age:</strong> {pet.age} {pet.age === 1 ? 'year' : 'years'}</p>
           <p><strong>Gender:</strong> {pet.gender}</p>
           <p><strong>Size:</strong> {pet.size}</p>
-          <p><strong>Activity Level:</strong> {pet.activityLevel}</p>
-          {/* <p><strong>Health Status:</strong> {pet.healthStatus}</p> */}
-          <p><strong>Availability:</strong> {pet.availabilityStatus}</p>
-          <p><strong>Adoption Fee:</strong> {pet.adoptionFee}</p>
-          <p><strong>Created At:</strong> {new Date(pet.createdAt).toLocaleDateString()}</p>
+          <p><strong>Activity Level:</strong> {pet.activity_level}</p>
+          <p><strong>Availability:</strong> {pet.availability_status}</p>
+          <p><strong>Adoption Fee:</strong> Rs. {pet.adoption_fee}</p>
+          <p><strong>Posted On:</strong> {new Date(pet.created_at).toLocaleDateString()}</p>
         </div>
       </div>
 
@@ -57,61 +63,16 @@ export default function PetDetails({ params }: PetDetailsProps) {
       <div>
         <h2 className="text-xl font-semibold mb-2">Temperament</h2>
         <ul className="list-disc pl-5 space-y-1">
-          {pet.temperament.map((t) => (
+          {pet.temperament.map((t: string) => (
             <li key={t}>{t}</li>
           ))}
         </ul>
       </div>
 
-      {/* Adoption Requirements */}
-      {/* <div>
-        <h2 className="text-xl font-semibold mb-2">Adoption Requirements</h2>
-        <ul className="list-disc pl-5 space-y-1">
-          {pet.adoptionRequirements.map((req) => (
-            <li key={req}>{req}</li>
-          ))}
-        </ul>
-      </div> */}
-
-      {/* Compatibility */}
-      {/* <div>
-        <h2 className="text-xl font-semibold mb-2">Compatibility</h2>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Children: {pet.compatibility.children ? 'Yes' : 'No'}</li>
-          <li>Other Pets: {pet.compatibility.otherPets ? 'Yes' : 'No'}</li>
-          <li>Suitable for Apartments: {pet.compatibility.apartments ? 'Yes' : 'No'}</li>
-        </ul>
-      </div> */}
-
-      {/* Care Requirements */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Care Details</h2>
-        <p><strong>Diet:</strong> {pet.care.diet.type} — {pet.care.diet.frequency}</p>
-
-        {/* {pet.care.toys && pet.care.toys.length > 0 && (
-          <p><strong>Favorite Toys:</strong> {pet.care.toys.join(', ')}</p>
-        )} */}
-
-        {pet.care.spaceRequirements && (
-          <div className="mt-2">
-            <p><strong>Indoor:</strong> {pet.care.spaceRequirements.indoor}</p>
-            {pet.care.spaceRequirements.outdoor && (
-              <p><strong>Outdoor:</strong> {pet.care.spaceRequirements.outdoor}</p>
-            )}
-            {pet.care.spaceRequirements.yardSize && (
-              <p><strong>Yard Size:</strong> {pet.care.spaceRequirements.yardSize}</p>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Location */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Location</h2>
-        <p><strong>Address:</strong> {pet.location.address}</p>
-        {pet.location.suitability && (
-          <p><strong>Best For:</strong> {pet.location.suitability.join(', ')}</p>
-        )}
+        <p><strong>Address:</strong> {pet.location_address}</p>
       </div>
     </div>
   );
