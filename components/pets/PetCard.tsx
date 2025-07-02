@@ -35,9 +35,9 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
         <div className="relative overflow-hidden">
           {/* Image */}
           <div className="aspect-[4/3] relative overflow-hidden rounded-t-lg">
-            {!imageError && pet.images.length > 0 ? (
+            {!imageError && pet.image ? (
               <img
-                src={pet.images[0]}
+                src={pet.image}
                 alt={pet.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={() => setImageError(true)}
@@ -112,18 +112,18 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
-                  {pet.location.address}
+                  {pet.location?.address || "Unknown location"}
                 </div>
               </div>
 
               {/* Temperament Tags */}
               <div className="flex flex-wrap gap-1">
-                {pet.temperament.slice(0, 3).map((trait) => (
+                {pet.temperament?.slice(0, 3).map((trait) => (
                   <Badge key={trait} variant="outline" className="text-xs">
                     {trait}
                   </Badge>
                 ))}
-                {pet.temperament.length > 3 && (
+                {pet.temperament?.length > 3 && (
                   <Badge variant="outline" className="text-xs">
                     +{pet.temperament.length - 3} more
                   </Badge>
@@ -138,7 +138,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
               {/* Adoption Fee */}
               <div className="flex items-center justify-between pt-2 border-t">
                 <div className="text-lg font-semibold text-primary">
-                  Rs.{pet.adoptionFee}
+                  Rs.{pet.adoption_fee}
                 </div>
                 <Button
                   variant="outline"

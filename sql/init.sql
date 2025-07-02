@@ -1,6 +1,17 @@
 -- Define custom ENUM types
-CREATE TYPE user_role AS ENUM ('admin', 'user', 'foster-user');
-CREATE TYPE availability_status_enum AS ENUM ('Available', 'Pending', 'Adopted', 'Fostered_Available', 'Fostered_Not_Available');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE user_role AS ENUM ('admin', 'user', 'foster-user');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'availability_status_enum') THEN
+    CREATE TYPE availability_status_enum AS ENUM (
+      'Available', 'Pending', 'Adopted', 'Fostered_Available', 'Fostered_Not_Available'
+    );
+  END IF;
+END $$;
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
@@ -16,8 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-
--- Create pets table
+-- Create pets table (updated)
 CREATE TABLE IF NOT EXISTS pets (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -28,21 +38,16 @@ CREATE TABLE IF NOT EXISTS pets (
   size VARCHAR(50) NOT NULL,
   temperament TEXT[] NOT NULL,
   activity_level VARCHAR(50) NOT NULL,
-  health_status VARCHAR(100) NOT NULL,
-  adoption_requirements TEXT[],
   description TEXT NOT NULL,
-  images TEXT[] NOT NULL,
-  location_address VARCHAR(255) NOT NULL,
-  location_coordinates POINT,
-  location_suitability TEXT[],
+  image TEXT NOT NULL, -- Accepts URL or local path
+  location_address VARCHAR(255), -- Optional
+  location_coordinates POINT,    -- Optional
   diet_type VARCHAR(255),
   diet_frequency VARCHAR(255),
-  toys TEXT[],
-  space_requirements JSONB,
-  compatibility JSONB,
+  space_requirements TEXT,       -- Simple text (or convert to JSONB if needed)
   adoption_fee INTEGER NOT NULL,
-  availability_status availability_status_enum DEFAULT 'Available', -- Changed to new enum type
-  foster_parent_id INTEGER REFERENCES users(id) ON DELETE SET NULL, -- New: Foreign key to link to foster parent
+  availability_status availability_status_enum DEFAULT 'Available',
+  foster_parent_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -67,36 +72,7 @@ CREATE TABLE IF NOT EXISTS user_favorites (
   UNIQUE(user_id, pet_id)
 );
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_pets_species ON pets(species);
-CREATE INDEX IF NOT EXISTS idx_pets_availability ON pets(availability_status);
-CREATE INDEX IF NOT EXISTS idx_adoption_applications_user_id ON adoption_applications(user_id);
-CREATE INDEX IF NOT EXISTS idx_adoption_applications_pet_id ON adoption_applications(pet_id);
-CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
-
--- Insert sample pets data
-INSERT INTO pets (
-  name, species, breed, age, gender, size, temperament, activity_level, 
-  health_status, adoption_requirements, description, images, location_address,
-  location_suitability, diet_type, diet_frequency, toys, space_requirements,
-  compatibility, adoption_fee
-) VALUES 
-(
-  'Luna', 'Dog', 'Golden Retriever', 3, 'Female', 'Large',
-  ARRAY['Friendly', 'Energetic', 'Loyal'], 'High', 'Excellent',
-  ARRAY['Fenced yard', 'Experience with large dogs'],
-  'Luna is a beautiful Golden Retriever who loves playing fetch and swimming. She''s great with kids and other dogs.',
-  ARRAY['https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg'],
-  'San Francisco, CA', ARRAY['Urban', 'Suburban'],
-  'High-quality dry food', 'Twice daily',
-  ARRAY['Tennis balls', 'Rope toys', 'Frisbee'],
-  '{"indoor": "Large living space", "outdoor": "Large yard", "yardSize": "Medium to large"}',
-  '{"children": true, "otherPets": true, "apartments": false}',
-  250
-); -- Removed other sample pets to keep the diff concise, you can re-add them.
-
--- Add user_preferences table
+-- Add user preferences table
 CREATE TABLE IF NOT EXISTS user_preferences (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -119,5 +95,27 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   UNIQUE(user_id)
 );
 
--- Add index for better performance
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_pets_species ON pets(species);
+CREATE INDEX IF NOT EXISTS idx_pets_availability ON pets(availability_status);
+CREATE INDEX IF NOT EXISTS idx_adoption_applications_user_id ON adoption_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_adoption_applications_pet_id ON adoption_applications(pet_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_pets_temperament ON pets USING GIN (temperament);
+
+-- Sample pet data (updated to match new schema)
+-- INSERT INTO pets (
+--   name, species, breed, age, gender, size, temperament, activity_level,
+--   description, image, location_address, location_coordinates, diet_type, diet_frequency,
+--   space_requirements, adoption_fee
+-- ) VALUES (
+--   'Luna', 'Dog', 'Golden Retriever', 3, 'Female', 'Large',
+--   ARRAY['Friendly', 'Energetic', 'Loyal'], 'High',
+--   'Luna is a beautiful Golden Retriever who loves playing fetch and swimming. She''s great with kids and other dogs.',
+--   'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg',
+--   'San Francisco, CA', NULL,
+--   'High-quality dry food', 'Twice daily',
+--   'Requires a medium-to-large fenced yard', 250
+-- );
