@@ -1,4 +1,3 @@
-// app/api/admin/pets/route.ts
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 import cloudinary from "@/lib/cloudinary";
@@ -25,6 +24,35 @@ export async function POST(req: Request) {
     const space_requirements = formData.get("space_requirements") as string;
     const adoption_fee = parseFloat(formData.get("adoption_fee") as string);
 
+    const fosterIdRaw = formData.get("foster_parent_id") as string;
+    let foster_parent_id: number | null = null;
+
+    if (fosterIdRaw && fosterIdRaw.trim() !== "") {
+      const fosterId = parseInt(fosterIdRaw);
+      if (isNaN(fosterId)) {
+        return NextResponse.json(
+          { success: false, error: "Invalid foster parent ID" },
+          { status: 400 }
+        );
+      }
+
+      const fosterCheck = await db.query(
+        `SELECT id FROM users WHERE id = $1 AND role = 'foster-user'`,
+        [fosterId]
+      );
+      if (fosterCheck.rowCount === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Foster parent ID does not exist or is not a foster user",
+          },
+          { status: 400 }
+        );
+      }
+
+      foster_parent_id = fosterId;
+    }
+
     let imageUrl = "";
     const imageField = formData.get("image");
 
@@ -46,9 +74,11 @@ export async function POST(req: Request) {
         folder: "paw_protection_pets",
       });
       imageUrl = uploadRes.secure_url;
+    } else if (typeof imageField === "string" && imageField.trim() !== "") {
+      imageUrl = imageField;
     } else {
       return NextResponse.json(
-        { success: false, error: "No valid image file provided" },
+        { success: false, error: "No valid image provided" },
         { status: 400 }
       );
     }
@@ -58,10 +88,10 @@ export async function POST(req: Request) {
       INSERT INTO pets (
         name, species, breed, age, gender, size, temperament, activity_level,
         description, image, location_address, diet_type, diet_frequency,
-        space_requirements, adoption_fee
+        space_requirements, adoption_fee, foster_parent_id
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7::text[], $8, $9, $10,
-        $11, $12, $13, $14, $15
+        $11, $12, $13, $14, $15, $16
       )
       `,
       [
@@ -80,6 +110,7 @@ export async function POST(req: Request) {
         diet_frequency,
         space_requirements,
         adoption_fee,
+        foster_parent_id,
       ]
     );
 

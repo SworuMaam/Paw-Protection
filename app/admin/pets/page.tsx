@@ -1,12 +1,11 @@
-// app/admin/add-pet/page.tsx (or wherever your AddPetPage component is)
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 const speciesOptions = ["Dog", "Cat"];
@@ -24,9 +23,15 @@ const temperamentOptions = [
   "Loyal",
 ];
 const activityLevelOptions = ["Low", "Moderate", "High", "Very High"];
-const spaceRequirementOptions = ["Small apartment", "House with yard", "Farm"];
+const spaceRequirementOptions = [
+  "Small apartment",
+  "House with yard",
+  "Farm",
+];
 
 export default function AddPetPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     name: "",
     species: "",
@@ -37,19 +42,19 @@ export default function AddPetPage() {
     temperament: [] as string[],
     activity_level: "",
     description: "",
+    image: "",
     imageFile: null as File | null,
     location_address: "",
     diet_type: "",
     diet_frequency: "",
     space_requirements: "",
     adoption_fee: "",
+    foster_parent_id: "",
   });
-
-  const router = useRouter();
 
   const handleChange = (
     e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
     const { name, value } = e.target;
@@ -58,7 +63,7 @@ export default function AddPetPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, imageFile: file }));
+    setFormData((prev) => ({ ...prev, imageFile: file, image: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,18 +72,13 @@ export default function AddPetPage() {
     const form = new FormData();
 
     Object.entries(formData).forEach(([key, value]) => {
-      if (key === "temperament" || key === "imageFile") return;
-      form.append(key, value as string);
+      if (key === "imageFile" || key === "temperament") return;
+      if (value !== "") form.append(key, value as string);
     });
 
     formData.temperament.forEach((t) => form.append("temperament", t));
-
-    if (formData.imageFile) {
-      form.append("image", formData.imageFile);
-    } else {
-      toast.error("Please upload an image.");
-      return;
-    }
+    if (formData.imageFile) form.append("image", formData.imageFile);
+    else if (formData.image) form.append("image", formData.image);
 
     try {
       const res = await fetch("/api/admin/pets", {
@@ -92,7 +92,7 @@ export default function AddPetPage() {
         toast.success("Pet added successfully!");
         router.push("/admin");
       } else {
-        toast.error(result.error || "Error adding pet");
+        toast.error(result.error || "Failed to add pet");
       }
     } catch (error) {
       toast.error("Unexpected error occurred");
@@ -102,9 +102,9 @@ export default function AddPetPage() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg mt-8"
+      className="max-w-3xl mx-auto mt-10 p-6 bg-white shadow rounded space-y-6"
     >
-      <h1 className="text-3xl font-bold mb-4 text-center">Add New Pet</h1>
+      <h2 className="text-3xl font-bold text-center">Add New Pet</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -151,8 +151,8 @@ export default function AddPetPage() {
         <div>
           <Label>Age</Label>
           <Input
-            name="age"
             type="number"
+            name="age"
             value={formData.age}
             onChange={handleChange}
             required
@@ -248,14 +248,10 @@ export default function AddPetPage() {
       </div>
 
       <div>
-        <Label>Image Upload (File Only)</Label>
-        <Input
-          type="file"
-          name="image"
-          accept="image/*"
-          onChange={handleFileChange}
-          required
-        />
+        <Label>Image Upload (File or URL)</Label>
+        <Input type="file" accept="image/*" onChange={handleFileChange} required />
+        <div className="text-sm text-gray-500 mt-1">or enter image URL:</div>
+        <Input name="image" type="url" value={formData.image} onChange={handleChange} />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -295,7 +291,7 @@ export default function AddPetPage() {
             className="w-full border rounded p-2"
             required
           >
-            <option value="">Select one</option>
+            <option value="">Select space</option>
             {spaceRequirementOptions.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -313,9 +309,22 @@ export default function AddPetPage() {
             required
           />
         </div>
+        <div>
+          <Label>Foster Parent ID (optional)</Label>
+          <Input
+            name="foster_parent_id"
+            type="number"
+            value={formData.foster_parent_id}
+            onChange={handleChange}
+            placeholder="Enter foster user ID"
+          />
+          <p className="text-xs text-muted-foreground">
+            Leave blank if not assigning
+          </p>
+        </div>
       </div>
 
-      <div className="text-center">
+      <div className="text-center pt-4">
         <Button type="submit" size="lg">
           Submit Pet
         </Button>
