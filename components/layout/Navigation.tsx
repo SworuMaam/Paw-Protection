@@ -7,25 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Menu,
-  User,
-  Settings,
-  LogOut,
-  Shield,
-  Home,
-  Search,
-  Star,
-  Info,
-  Mail,
-  PawPrint,
-  Edit,
+  Menu, User, Settings, LogOut, Shield, Home,
+  Search, Star, Info, Mail, PawPrint, Edit
 } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -61,9 +48,7 @@ export function Navigation() {
     else homeLink = "/dashboard";
   }
 
-  const navigationItems = isAdmin ? adminNavItems : defaultNavItems.filter(
-    (item) => item.href !== "/about" && item.href !== "/contact"
-  );
+  const navigationItems = isAdmin ? adminNavItems : defaultNavItems;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -181,7 +166,7 @@ export function Navigation() {
             )}
           </div>
 
-          {/* Mobile Navigation (Sheet) */}
+          {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="sm">
@@ -217,7 +202,6 @@ export function Navigation() {
                     <span>{item.label}</span>
                   </Link>
                 ))}
-
                 {isAuthenticated ? (
                   <div className="border-t pt-4">
                     {user?.role === "user" &&

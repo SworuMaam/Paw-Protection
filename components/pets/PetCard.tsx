@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, MapPin, Calendar, User, Pencil } from "lucide-react";
+import { Heart, MapPin, Calendar, User, Trash, Pencil } from "lucide-react";
 import { Pet } from "@/types/pet";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext"; // import your auth hook
+import { toast } from "sonner";
 
 interface PetCardProps {
   pet: Pet;
@@ -15,14 +16,36 @@ interface PetCardProps {
 }
 
 export function PetCard({ pet, showFavorite = false }: PetCardProps) {
+  const pathname = usePathname();
+  const router = useRouter();
   const [isFavorited, setIsFavorited] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const { user } = useAuth(); // get user to check role
+  const [deleting, setDeleting] = useState(false);
 
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const isAdminEditPage = pathname === "/admin/edit-pets";
+
+  const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorited(!isFavorited);
+
+    if (!confirm(`Are you sure you want to delete ${pet.name}?`)) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/pets/${pet.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete pet");
+
+      toast.success("Pet deleted");
+      router.refresh(); // Refresh current page to remove deleted card
+    } catch (err) {
+      toast.error("Error deleting pet");
+      console.error(err);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const getAgeText = (age: number) => {
@@ -31,13 +54,9 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
     return `${age} years`;
   };
 
-  const isAdmin = user?.role === "admin";
-  const actionLink = isAdmin ? `/admin/edit-pets/${pet.id}` : `/pets/${pet.id}`;
-  const actionLabel = isAdmin ? "Edit" : "Learn More";
-
   return (
     <Card className="pet-card group">
-      <Link href={actionLink}>
+      <Link href={isAdminEditPage ? "#" : `/pets/${pet.id}`}>
         <div className="relative overflow-hidden">
           {/* Image */}
           <div className="aspect-[4/3] relative overflow-hidden rounded-t-lg">
@@ -59,13 +78,16 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
               </div>
             )}
 
-            {/* Favorite Button */}
-            {showFavorite && !isAdmin && (
+            {/* Favorite */}
+            {showFavorite && !isAdminEditPage && (
               <Button
                 size="sm"
                 variant="secondary"
                 className="absolute top-3 right-3 h-8 w-8 p-0 rounded-full shadow-md"
-                onClick={handleFavoriteToggle}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsFavorited((prev) => !prev);
+                }}
               >
                 <Heart
                   className={`h-4 w-4 ${
@@ -95,7 +117,6 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
           </div>
 
           <CardContent className="p-6">
-            {/* Pet Info */}
             <div className="space-y-3">
               <div>
                 <h3 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">
@@ -106,7 +127,6 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 </p>
               </div>
 
-              {/* Quick Stats */}
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -122,7 +142,6 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 </div>
               </div>
 
-              {/* Temperament Tags */}
               <div className="flex flex-wrap gap-1">
                 {pet.temperament?.slice(0, 3).map((trait) => (
                   <Badge key={trait} variant="outline" className="text-xs">
@@ -136,33 +155,44 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 )}
               </div>
 
-              {/* Description */}
               <p className="text-sm text-muted-foreground line-clamp-2">
                 {pet.description}
               </p>
 
-              {/* Adoption Fee + Action */}
               <div className="flex items-center justify-between pt-2 border-t">
                 <div className="text-lg font-semibold text-primary">
                   Rs.{pet.adoption_fee}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                  asChild
-                >
-                  <Link href={actionLink}>
-                    {isAdmin ? (
-                      <>
+
+                {isAdminEditPage ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:bg-red-50"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      <Trash className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                    <Button asChild variant="default" size="sm">
+                      <Link href={`/admin/editpets/${pet.id}`}>
                         <Pencil className="h-4 w-4 mr-1" />
                         Edit
-                      </>
-                    ) : (
-                      actionLabel
-                    )}
-                  </Link>
-                </Button>
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    asChild
+                  >
+                    <Link href={`/pets/${pet.id}`}>Learn More</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
