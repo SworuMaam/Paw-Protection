@@ -4,9 +4,10 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, MapPin, Calendar, User } from "lucide-react";
+import { Heart, MapPin, Calendar, User, Pencil } from "lucide-react";
 import { Pet } from "@/types/pet";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext"; // import your auth hook
 
 interface PetCardProps {
   pet: Pet;
@@ -16,6 +17,7 @@ interface PetCardProps {
 export function PetCard({ pet, showFavorite = false }: PetCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const { user } = useAuth(); // get user to check role
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,9 +31,13 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
     return `${age} years`;
   };
 
+  const isAdmin = user?.role === "admin";
+  const actionLink = isAdmin ? `/admin/edit-pets/${pet.id}` : `/pets/${pet.id}`;
+  const actionLabel = isAdmin ? "Edit" : "Learn More";
+
   return (
     <Card className="pet-card group">
-      <Link href={`/pets/${pet.id}`}>
+      <Link href={actionLink}>
         <div className="relative overflow-hidden">
           {/* Image */}
           <div className="aspect-[4/3] relative overflow-hidden rounded-t-lg">
@@ -54,7 +60,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
             )}
 
             {/* Favorite Button */}
-            {showFavorite && (
+            {showFavorite && !isAdmin && (
               <Button
                 size="sm"
                 variant="secondary"
@@ -135,7 +141,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 {pet.description}
               </p>
 
-              {/* Adoption Fee */}
+              {/* Adoption Fee + Action */}
               <div className="flex items-center justify-between pt-2 border-t">
                 <div className="text-lg font-semibold text-primary">
                   Rs.{pet.adoption_fee}
@@ -146,7 +152,16 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                   className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                   asChild
                 >
-                  <Link href={`/pets/${pet.id}`}>Learn More</Link>
+                  <Link href={actionLink}>
+                    {isAdmin ? (
+                      <>
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </>
+                    ) : (
+                      actionLabel
+                    )}
+                  </Link>
                 </Button>
               </div>
             </div>

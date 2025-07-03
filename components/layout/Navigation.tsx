@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Menu,
   User,
@@ -18,25 +18,30 @@ import {
   Info,
   Mail,
   PawPrint,
-} from 'lucide-react';
+  Edit,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const navigationItems = [
-  { href: '/pets', label: 'Find Pets', icon: Search },
-  { href: '/about', label: 'About Us', icon: Info },
-  { href: '/contact', label: 'Contact', icon: Mail },
+const defaultNavItems = [
+  { href: "/pets", label: "Find Pets", icon: Search },
+  { href: "/about", label: "About Us", icon: Info },
+  { href: "/contact", label: "Contact", icon: Mail },
+];
+
+const adminNavItems = [
+  { href: "/admin/edit-pets", label: "Edit Pets", icon: Edit },
 ];
 
 const userMenuItems = [
-  { href: '/recommendations', label: 'Recommendations', icon: Star },
-  { href: '/preferences', label: 'Preferences', icon: Settings },
+  { href: "/recommendations", label: "Recommendations", icon: Star },
+  { href: "/preferences", label: "Preferences", icon: Settings },
 ];
 
 export function Navigation() {
@@ -49,12 +54,16 @@ export function Navigation() {
     setIsOpen(false);
   };
 
-  let homeLink = '/';
+  let homeLink = "/";
   if (isAuthenticated && user?.role) {
-    if (user.role === 'admin') homeLink = '/admin';
-    else if (user.role === 'foster-user') homeLink = '/foster-dashboard';
-    else homeLink = '/dashboard';
+    if (user.role === "admin") homeLink = "/admin";
+    else if (user.role === "foster-user") homeLink = "/foster-dashboard";
+    else homeLink = "/dashboard";
   }
+
+  const navigationItems = isAdmin ? adminNavItems : defaultNavItems.filter(
+    (item) => item.href !== "/about" && item.href !== "/contact"
+  );
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -65,7 +74,9 @@ export function Navigation() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <PawPrint className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold gradient-text">Paw Protection</span>
+            <span className="text-xl font-bold gradient-text">
+              Paw Protection
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -74,8 +85,8 @@ export function Navigation() {
               href={homeLink}
               className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 pathname === homeLink
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
             >
               <Home className="h-4 w-4" />
@@ -87,8 +98,8 @@ export function Navigation() {
                 href={item.href}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   pathname === item.href
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -101,28 +112,27 @@ export function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                {user?.role === 'user' &&
+                {user?.role === "user" &&
                   userMenuItems.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                         pathname === item.href
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
                       }`}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
                     </Link>
                   ))}
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {user?.name?.charAt(0).toUpperCase() || 'U'}
+                          {user?.name?.charAt(0).toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -171,7 +181,7 @@ export function Navigation() {
             )}
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Navigation (Sheet) */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="sm">
@@ -185,8 +195,8 @@ export function Navigation() {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     pathname === homeLink
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
                 >
                   <Home className="h-4 w-4" />
@@ -199,8 +209,8 @@ export function Navigation() {
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       pathname === item.href
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     }`}
                   >
                     <item.icon className="h-4 w-4" />
@@ -210,7 +220,7 @@ export function Navigation() {
 
                 {isAuthenticated ? (
                   <div className="border-t pt-4">
-                    {user?.role === 'user' &&
+                    {user?.role === "user" &&
                       userMenuItems.map((item) => (
                         <Link
                           key={item.href}
@@ -218,8 +228,8 @@ export function Navigation() {
                           onClick={() => setIsOpen(false)}
                           className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                             pathname === item.href
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent"
                           }`}
                         >
                           <item.icon className="h-4 w-4" />
