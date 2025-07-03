@@ -15,7 +15,13 @@ const breedOptions: Record<string, string[]> = {
 };
 const sizeOptions = ["Small", "Medium", "Large", "Extra Large"];
 const genderOptions = ["Male", "Female"];
-const temperamentOptions = ["Friendly", "Energetic", "Calm", "Playful", "Loyal"];
+const temperamentOptions = [
+  "Friendly",
+  "Energetic",
+  "Calm",
+  "Playful",
+  "Loyal",
+];
 const activityLevelOptions = ["Low", "Moderate", "High", "Very High"];
 const spaceRequirementOptions = ["Small apartment", "House with yard", "Farm"];
 
@@ -36,7 +42,7 @@ export default function AddPetPage() {
     diet_type: "",
     diet_frequency: "",
     space_requirements: "",
-    adoption_fee: ""
+    adoption_fee: "",
   });
 
   const router = useRouter();
@@ -56,7 +62,10 @@ export default function AddPetPage() {
   };
 
   const handleTemperamentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const values = e.target.value.split(",").map((v) => v.trim()).filter(Boolean);
+    const values = e.target.value
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
     setFormData((prev) => ({ ...prev, temperament: values }));
   };
 
@@ -103,7 +112,12 @@ export default function AddPetPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Name</Label>
-          <Input name="name" value={formData.name} onChange={handleChange} required />
+          <Input
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div>
@@ -117,7 +131,9 @@ export default function AddPetPage() {
           >
             <option value="">Select species</option>
             {speciesOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
@@ -133,14 +149,22 @@ export default function AddPetPage() {
           >
             <option value="">Select breed</option>
             {(breedOptions[formData.species] || []).map((b) => (
-              <option key={b} value={b}>{b}</option>
+              <option key={b} value={b}>
+                {b}
+              </option>
             ))}
           </select>
         </div>
 
         <div>
           <Label>Age</Label>
-          <Input name="age" type="number" value={formData.age} onChange={handleChange} required />
+          <Input
+            name="age"
+            type="number"
+            value={formData.age}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div>
@@ -154,7 +178,9 @@ export default function AddPetPage() {
           >
             <option value="">Select gender</option>
             {genderOptions.map((g) => (
-              <option key={g} value={g}>{g}</option>
+              <option key={g} value={g}>
+                {g}
+              </option>
             ))}
           </select>
         </div>
@@ -170,7 +196,9 @@ export default function AddPetPage() {
           >
             <option value="">Select size</option>
             {sizeOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
@@ -186,7 +214,9 @@ export default function AddPetPage() {
           >
             <option value="">Select level</option>
             {activityLevelOptions.map((a) => (
-              <option key={a} value={a}>{a}</option>
+              <option key={a} value={a}>
+                {a}
+              </option>
             ))}
           </select>
         </div>
@@ -197,14 +227,18 @@ export default function AddPetPage() {
             multiple
             value={formData.temperament}
             onChange={(e) => {
-              const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
+              const selected = Array.from(e.target.selectedOptions).map(
+                (opt) => opt.value
+              );
               setFormData((prev) => ({ ...prev, temperament: selected }));
             }}
             className="w-full border rounded p-2 h-28"
             required
           >
             {temperamentOptions.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
           </select>
         </div>
@@ -223,8 +257,17 @@ export default function AddPetPage() {
 
       <div>
         <Label>Image Upload (File or URL)</Label>
-        <Input type="file" accept="image/*" onChange={handleFileChange} />
-        <div className="mt-2 text-sm text-gray-600">or enter image URL below:</div>
+        <Input
+          type="file"
+          name="image"
+          accept="image/*"
+          onChange={handleFileChange}
+          required
+        />
+
+        <div className="mt-2 text-sm text-gray-600">
+          or enter image URL below:
+        </div>
         <Input
           name="image"
           type="url"
@@ -236,15 +279,30 @@ export default function AddPetPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <Label>Location Address</Label>
-          <Input name="location_address" value={formData.location_address} onChange={handleChange} required />
+          <Input
+            name="location_address"
+            value={formData.location_address}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div>
           <Label>Diet Type</Label>
-          <Input name="diet_type" value={formData.diet_type} onChange={handleChange} required />
+          <Input
+            name="diet_type"
+            value={formData.diet_type}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div>
           <Label>Diet Frequency</Label>
-          <Input name="diet_frequency" value={formData.diet_frequency} onChange={handleChange} required />
+          <Input
+            name="diet_frequency"
+            value={formData.diet_frequency}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div>
           <Label>Space Requirements</Label>
@@ -257,18 +315,28 @@ export default function AddPetPage() {
           >
             <option value="">Select one</option>
             {spaceRequirementOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
         <div>
           <Label>Adoption Fee</Label>
-          <Input name="adoption_fee" type="number" value={formData.adoption_fee} onChange={handleChange} required />
+          <Input
+            name="adoption_fee"
+            type="number"
+            value={formData.adoption_fee}
+            onChange={handleChange}
+            required
+          />
         </div>
       </div>
 
       <div className="text-center">
-        <Button type="submit" size="lg">Submit Pet</Button>
+        <Button type="submit" size="lg">
+          Submit Pet
+        </Button>
       </div>
     </form>
   );
