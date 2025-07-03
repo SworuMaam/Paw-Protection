@@ -1,3 +1,4 @@
+// app/admin/add-pet/page.tsx (or wherever your AddPetPage component is)
 "use client";
 
 import { useState } from "react";
@@ -36,7 +37,6 @@ export default function AddPetPage() {
     temperament: [] as string[],
     activity_level: "",
     description: "",
-    image: "",
     imageFile: null as File | null,
     location_address: "",
     diet_type: "",
@@ -58,15 +58,7 @@ export default function AddPetPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, imageFile: file, image: "" }));
-  };
-
-  const handleTemperamentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const values = e.target.value
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean);
-    setFormData((prev) => ({ ...prev, temperament: values }));
+    setFormData((prev) => ({ ...prev, imageFile: file }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,8 +72,13 @@ export default function AddPetPage() {
     });
 
     formData.temperament.forEach((t) => form.append("temperament", t));
-    if (formData.imageFile) form.append("image", formData.imageFile);
-    else if (formData.image) form.append("image", formData.image);
+
+    if (formData.imageFile) {
+      form.append("image", formData.imageFile);
+    } else {
+      toast.error("Please upload an image.");
+      return;
+    }
 
     try {
       const res = await fetch("/api/admin/pets", {
@@ -112,12 +109,7 @@ export default function AddPetPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Name</Label>
-          <Input
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+          <Input name="name" value={formData.name} onChange={handleChange} required />
         </div>
 
         <div>
@@ -256,23 +248,13 @@ export default function AddPetPage() {
       </div>
 
       <div>
-        <Label>Image Upload (File or URL)</Label>
+        <Label>Image Upload (File Only)</Label>
         <Input
           type="file"
           name="image"
           accept="image/*"
           onChange={handleFileChange}
           required
-        />
-
-        <div className="mt-2 text-sm text-gray-600">
-          or enter image URL below:
-        </div>
-        <Input
-          name="image"
-          type="url"
-          value={formData.image}
-          onChange={handleChange}
         />
       </div>
 

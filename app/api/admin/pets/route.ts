@@ -46,11 +46,9 @@ export async function POST(req: Request) {
         folder: "paw_protection_pets",
       });
       imageUrl = uploadRes.secure_url;
-    } else if (typeof imageField === "string" && imageField.trim() !== "") {
-      imageUrl = imageField;
     } else {
       return NextResponse.json(
-        { success: false, error: "No valid image provided" },
+        { success: false, error: "No valid image file provided" },
         { status: 400 }
       );
     }
