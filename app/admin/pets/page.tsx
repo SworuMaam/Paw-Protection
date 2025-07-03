@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,13 @@ const spaceRequirementOptions = [
   "House with yard",
   "Farm",
 ];
+const availabilityOptions = [
+  "Available",
+  "Pending",
+  "Adopted",
+  "Fostered_Available",
+  "Fostered_Not_Available",
+];
 
 export default function AddPetPage() {
   const router = useRouter();
@@ -42,7 +49,6 @@ export default function AddPetPage() {
     temperament: [] as string[],
     activity_level: "",
     description: "",
-    image: "",
     imageFile: null as File | null,
     location_address: "",
     diet_type: "",
@@ -50,7 +56,23 @@ export default function AddPetPage() {
     space_requirements: "",
     adoption_fee: "",
     foster_parent_id: "",
+    availability_status: "Available",
   });
+
+  // Update availability_status automatically based on foster_parent_id
+  useEffect(() => {
+    if (formData.foster_parent_id && formData.foster_parent_id.trim() !== "") {
+      setFormData((prev) => ({
+        ...prev,
+        availability_status: "Fostered_Not_Available",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        availability_status: "Available",
+      }));
+    }
+  }, [formData.foster_parent_id]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -63,7 +85,7 @@ export default function AddPetPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, imageFile: file, image: "" }));
+    setFormData((prev) => ({ ...prev, imageFile: file }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,7 +100,6 @@ export default function AddPetPage() {
 
     formData.temperament.forEach((t) => form.append("temperament", t));
     if (formData.imageFile) form.append("image", formData.imageFile);
-    else if (formData.image) form.append("image", formData.image);
 
     try {
       const res = await fetch("/api/admin/pets", {
@@ -109,7 +130,12 @@ export default function AddPetPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Name</Label>
-          <Input name="name" value={formData.name} onChange={handleChange} required />
+          <Input
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div>
@@ -248,10 +274,13 @@ export default function AddPetPage() {
       </div>
 
       <div>
-        <Label>Image Upload (File or URL)</Label>
-        <Input type="file" accept="image/*" onChange={handleFileChange} required />
-        <div className="text-sm text-gray-500 mt-1">or enter image URL:</div>
-        <Input name="image" type="url" value={formData.image} onChange={handleChange} />
+        <Label>Image Upload (File only)</Label>
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          required
+        />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -261,7 +290,7 @@ export default function AddPetPage() {
             name="location_address"
             value={formData.location_address}
             onChange={handleChange}
-            required
+            placeholder="Leave blank to auto-set"
           />
         </div>
         <div>
@@ -321,6 +350,22 @@ export default function AddPetPage() {
           <p className="text-xs text-muted-foreground">
             Leave blank if not assigning
           </p>
+        </div>
+        <div>
+          <Label>Availability Status</Label>
+          <select
+            name="availability_status"
+            value={formData.availability_status}
+            onChange={handleChange}
+            className="w-full border rounded p-2"
+            required
+          >
+            {availabilityOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

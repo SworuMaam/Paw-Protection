@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import db from "@/lib/db";
 import cloudinary from "@/lib/cloudinary";
 
+const availabilityOptions = [
+  "Available",
+  "Pending",
+  "Adopted",
+  "Fostered_Available",
+  "Fostered_Not_Available",
+];
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -18,7 +26,7 @@ export async function POST(req: Request) {
     const temperament = getArray("temperament");
     const activity_level = formData.get("activity_level") as string;
     const description = formData.get("description") as string;
-    const location_address = formData.get("location_address") as string;
+    let location_address = formData.get("location_address") as string;
     const diet_type = formData.get("diet_type") as string;
     const diet_frequency = formData.get("diet_frequency") as string;
     const space_requirements = formData.get("space_requirements") as string;
@@ -37,7 +45,7 @@ export async function POST(req: Request) {
       }
 
       const fosterCheck = await db.query(
-        `SELECT id FROM users WHERE id = $1 AND role = 'foster-user'`,
+        `SELECT id, location FROM users WHERE id = $1 AND role = 'foster-user'`,
         [fosterId]
       );
       if (fosterCheck.rowCount === 0) {
@@ -51,6 +59,33 @@ export async function POST(req: Request) {
       }
 
       foster_parent_id = fosterId;
+
+      // Override location_address with foster parent's location if available
+      if (
+        fosterCheck.rows[0].location &&
+        fosterCheck.rows[0].location.trim() !== ""
+      ) {
+        location_address = fosterCheck.rows[0].location;
+      }
+    }
+
+    // If no location provided and no foster parent assigned, default to Kathmandu, Nepal
+    if (
+      (!location_address || location_address.trim() === "") &&
+      !foster_parent_id
+    ) {
+      location_address = "Kathmandu, Nepal";
+    }
+
+    // Handle availability_status with fallback defaults
+    let availability_status = formData.get("availability_status") as string;
+    if (
+      !availability_status ||
+      !availabilityOptions.includes(availability_status)
+    ) {
+      availability_status = foster_parent_id
+        ? "Fostered_Not_Available"
+        : "Available";
     }
 
     let imageUrl = "";
@@ -74,8 +109,6 @@ export async function POST(req: Request) {
         folder: "paw_protection_pets",
       });
       imageUrl = uploadRes.secure_url;
-    } else if (typeof imageField === "string" && imageField.trim() !== "") {
-      imageUrl = imageField;
     } else {
       return NextResponse.json(
         { success: false, error: "No valid image provided" },
@@ -88,10 +121,10 @@ export async function POST(req: Request) {
       INSERT INTO pets (
         name, species, breed, age, gender, size, temperament, activity_level,
         description, image, location_address, diet_type, diet_frequency,
-        space_requirements, adoption_fee, foster_parent_id
+        space_requirements, adoption_fee, foster_parent_id, availability_status
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7::text[], $8, $9, $10,
-        $11, $12, $13, $14, $15, $16
+        $11, $12, $13, $14, $15, $16, $17
       )
       `,
       [
@@ -111,6 +144,7 @@ export async function POST(req: Request) {
         space_requirements,
         adoption_fee,
         foster_parent_id,
+        availability_status,
       ]
     );
 
