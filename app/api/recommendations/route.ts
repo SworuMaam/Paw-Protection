@@ -174,7 +174,7 @@ async function handler(req: NextRequest) {
               healthStatus: pet.health_status,
               adoptionRequirements: pet.adoption_requirements || [],
               description: pet.description,
-              images: pet.images || [],
+              image: pet.image || '',
               location: {
                 address: pet.location_address,
                 coordinates: pet.location_coordinates ? 

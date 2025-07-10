@@ -56,6 +56,7 @@ export default function ManageUsersPage() {
                   <th className="p-2">Location</th>
                   <th className="p-2">Contact</th>
                   <th className="p-2">Created At</th>
+                  <th className="p-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -71,6 +72,14 @@ export default function ManageUsersPage() {
                     <td className="p-2">{user.contact_number || "—"}</td>
                     <td className="p-2">
                       {new Date(user.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="p-2">
+                      <a
+                        href={`/admin/users/${user.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </a>
                     </td>
                   </tr>
                 ))}
