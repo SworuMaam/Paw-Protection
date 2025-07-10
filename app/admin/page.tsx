@@ -165,6 +165,17 @@ export default function AdminDashboard() {
                   Manage Users
                 </Link>
               </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
+              >
+                <Link href="/admin/adoption-request">
+                  <PawPrint className="mr-2 h-4 w-4" />
+                  Adoption Requests
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

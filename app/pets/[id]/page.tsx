@@ -1,29 +1,49 @@
-import db from '@/lib/db';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface PetDetailsProps {
-  params: {
-    id: string;
+export default function PetDetails() {
+  const { id } = useParams();
+  const { user, isUser } = useAuth();
+  const [pet, setPet] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPet = async () => {
+      const res = await fetch(`/api/pets/${id}`);
+      const data = await res.json();
+      setPet(data.pet);
+      setLoading(false);
+    };
+
+    fetchPet();
+  }, [id]);
+
+  const handleAdoptionRequest = async () => {
+    const res = await fetch('/api/adoption-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ petId: pet.id }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('Adoption request sent!');
+      window.location.reload();
+    } else {
+      alert(data.error || 'Failed to send request.');
+    }
   };
-}
 
-export default async function PetDetails({ params }: PetDetailsProps) {
-  const id = params.id;
-
-  const res = await db.query(
-    `SELECT 
-      id, name, species, breed, age, gender, size, temperament, 
-      activity_level, description, image, location_address, 
-      adoption_fee, availability_status, created_at 
-    FROM pets WHERE id = $1`,
-    [id]
-  );
-
-  const pet = res.rows[0];
+  if (loading) {
+    return <div className="text-center py-10">Loading...</div>;
+  }
 
   if (!pet) {
-    return notFound();
+    return <div className="text-center py-10">Pet not found.</div>;
   }
 
   return (
@@ -32,14 +52,8 @@ export default async function PetDetails({ params }: PetDetailsProps) {
 
       <h1 className="text-4xl font-bold">{pet.name}</h1>
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Image */}
-        <img
-          src={pet.image}
-          alt={pet.name}
-          className="rounded-lg w-full max-h-[400px] object-cover"
-        />
+        <img src={pet.image} alt={pet.name} className="rounded-lg w-full max-h-[400px] object-cover" />
 
-        {/* Basic Info */}
         <div className="space-y-4">
           <p><strong>Species:</strong> {pet.species}</p>
           <p><strong>Breed:</strong> {pet.breed}</p>
@@ -53,13 +67,11 @@ export default async function PetDetails({ params }: PetDetailsProps) {
         </div>
       </div>
 
-      {/* Description */}
       <div>
         <h2 className="text-2xl font-semibold mb-2">About {pet.name}</h2>
         <p className="text-muted-foreground">{pet.description}</p>
       </div>
 
-      {/* Temperament */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Temperament</h2>
         <ul className="list-disc pl-5 space-y-1">
@@ -69,11 +81,21 @@ export default async function PetDetails({ params }: PetDetailsProps) {
         </ul>
       </div>
 
-      {/* Location */}
       <div>
         <h2 className="text-xl font-semibold mb-2">Location</h2>
         <p><strong>Address:</strong> {pet.location_address}</p>
       </div>
+
+      {/* Adoption Request Button */}
+      {user?.role === 'user' && 
+        (pet.availability_status === 'Available' || pet.availability_status === 'Fostered_Available') && (
+        <button
+          onClick={handleAdoptionRequest}
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+        >
+          Send Adoption Request
+        </button>
+      )}
     </div>
   );
 }

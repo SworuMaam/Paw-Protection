@@ -177,7 +177,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                       Delete
                     </Button>
                     <Button asChild variant="default" size="sm">
-                      <Link href={`/admin/editpets/${pet.id}`}>
+                      <Link href={`/admin/edit-pets/${pet.id}`}>
                         <Pencil className="h-4 w-4 mr-1" />
                         Edit
                       </Link>
