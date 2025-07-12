@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const defaultNavItems = [
   { href: "/pets", label: "Find Pets", icon: Search },
-  { href: "/about", label: "About Us", icon: Info },
+  { href: "/about-us", label: "About Us", icon: Info },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 
