@@ -1,51 +1,80 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  MapPin, 
-  Loader2, 
-  Heart, 
-  Home, 
-  Users, 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  MapPin,
+  Loader2,
+  Heart,
+  Home,
+  Users,
   Clock,
   Star,
   CheckCircle,
-  AlertCircle
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { UserPreferences } from '@/types/preferences';
+  AlertCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { UserPreferences } from "@/types/preferences";
 
-const speciesOptions = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Other'];
-const sizeOptions = ['Small', 'Medium', 'Large', 'Extra Large'];
-const genderOptions = ['Male', 'Female'];
+const speciesOptions = ["Dog", "Cat"];
+const sizeOptions = ["Small", "Medium", "Large", "Extra Large"];
+const genderOptions = ["Male", "Female"];
 const temperamentOptions = [
-  'Friendly', 'Energetic', 'Calm', 'Playful', 'Loyal', 
-  'Independent', 'Gentle', 'Protective', 'Social', 'Quiet'
+  "Friendly",
+  "Energetic",
+  "Calm",
+  "Playful",
+  "Loyal",
+  "Independent",
+  "Gentle",
+  "Protective",
+  "Social",
+  "Quiet",
 ];
-const activityLevelOptions = ['Low', 'Moderate', 'High', 'Very High'];
-const housingOptions = ['Apartment', 'House', 'Farm/Rural'];
-const yardSizeOptions = ['No Yard', 'Small Yard', 'Medium Yard', 'Large Yard'];
-const experienceOptions = ['First-time Owner', 'Some Experience', 'Very Experienced'];
-const timeOptions = ['1-2 hours/day', '3-4 hours/day', '5+ hours/day', 'Most of the day'];
+const activityLevelOptions = ["Low", "Moderate", "High", "Very High"];
+const housingOptions = ["Apartment", "House", "Farm/Rural"];
+const yardSizeOptions = ["No Yard", "Small Yard", "Medium Yard", "Large Yard"];
+const experienceOptions = [
+  "First-time Owner",
+  "Some Experience",
+  "Very Experienced",
+];
+const timeOptions = [
+  "1-2 hours/day",
+  "3-4 hours/day",
+  "5+ hours/day",
+  "Most of the day",
+];
 
 export default function PreferencesPage() {
   const { user, isLoading, isUser } = useAuth();
   const router = useRouter();
-  
+
   const [preferences, setPreferences] = useState<UserPreferences>({
-    userId: '',
+    userId: "",
     species: [],
     breeds: [],
     size: [],
@@ -54,18 +83,18 @@ export default function PreferencesPage() {
     temperament: [],
     activityLevel: [],
     specialNeeds: false,
-    housingType: '',
-    yardSize: '',
-    experienceLevel: '',
-    timeAvailable: '',
+    housingType: "",
+    yardSize: "",
+    experienceLevel: "",
+    timeAvailable: "",
     location: {
-      type: 'manual',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: ''
+      type: "manual",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
     },
-    maxDistance: 50
+    maxDistance: 50,
   });
 
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
@@ -75,7 +104,7 @@ export default function PreferencesPage() {
 
   useEffect(() => {
     if (!isLoading && (!user || !isUser)) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, isUser, isLoading, router]);
 
@@ -87,8 +116,8 @@ export default function PreferencesPage() {
 
   const loadPreferences = async () => {
     try {
-      const response = await fetch('/api/preferences', {
-        credentials: 'include'
+      const response = await fetch("/api/preferences", {
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -97,51 +126,51 @@ export default function PreferencesPage() {
           setPreferences(data.preferences);
         } else {
           // Set default userId for new preferences
-          setPreferences(prev => ({ ...prev, userId: user!.id }));
+          setPreferences((prev) => ({ ...prev, userId: user!.id }));
         }
       }
     } catch (error) {
-      console.error('Failed to load preferences:', error);
-      toast.error('Failed to load preferences');
+      console.error("Failed to load preferences:", error);
+      toast.error("Failed to load preferences");
     } finally {
       setIsLoadingPrefs(false);
     }
   };
 
   const handleArrayToggle = (field: keyof UserPreferences, value: string) => {
-    setPreferences(prev => {
+    setPreferences((prev) => {
       const currentArray = prev[field] as string[];
       const newArray = currentArray.includes(value)
-        ? currentArray.filter(item => item !== value)
+        ? currentArray.filter((item) => item !== value)
         : [...currentArray, value];
-      
+
       setHasUnsavedChanges(true);
       return { ...prev, [field]: newArray };
     });
   };
 
   const handleInputChange = (field: keyof UserPreferences, value: any) => {
-    setPreferences(prev => {
+    setPreferences((prev) => {
       setHasUnsavedChanges(true);
       return { ...prev, [field]: value };
     });
   };
 
   const handleLocationChange = (field: string, value: any) => {
-    setPreferences(prev => {
+    setPreferences((prev) => {
       setHasUnsavedChanges(true);
       return {
         ...prev,
-        location: { ...prev.location, [field]: value }
+        location: { ...prev.location, [field]: value },
       };
     });
   };
 
   const getCurrentLocation = async () => {
     setIsGettingLocation(true);
-    
+
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported by this browser');
+      toast.error("Geolocation is not supported by this browser");
       setIsGettingLocation(false);
       return;
     }
@@ -150,67 +179,67 @@ export default function PreferencesPage() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          
+
           // Mock reverse geocoding - in production, use a real service
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          const mockAddress = 'Current Location';
-          const mockCity = 'Your City';
-          const mockState = 'Your State';
-          
-          setPreferences(prev => ({
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const mockAddress = "Current Location";
+          const mockCity = "Your City";
+          const mockState = "Your State";
+
+          setPreferences((prev) => ({
             ...prev,
             location: {
-              type: 'current',
+              type: "current",
               coordinates: [latitude, longitude],
               address: mockAddress,
               city: mockCity,
-              state: mockState
-            }
+              state: mockState,
+            },
           }));
-          
+
           setHasUnsavedChanges(true);
-          toast.success('Location detected successfully');
+          toast.success("Location detected successfully");
         } catch (error) {
-          toast.error('Failed to get location details');
+          toast.error("Failed to get location details");
         } finally {
           setIsGettingLocation(false);
         }
       },
       (error) => {
-        toast.error('Unable to retrieve your location');
+        toast.error("Unable to retrieve your location");
         setIsGettingLocation(false);
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 300000
+        maximumAge: 300000,
       }
     );
   };
 
   const handleSave = async () => {
     setIsSaving(true);
-    
+
     try {
-      const response = await fetch('/api/preferences', {
-        method: 'POST',
+      const response = await fetch("/api/preferences", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify(preferences),
       });
 
       if (response.ok) {
         setHasUnsavedChanges(false);
-        toast.success('Preferences saved successfully!');
+        toast.success("Preferences saved successfully!");
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Failed to save preferences');
+        toast.error(data.error || "Failed to save preferences");
       }
     } catch (error) {
-      console.error('Save error:', error);
-      toast.error('Failed to save preferences');
+      console.error("Save error:", error);
+      toast.error("Failed to save preferences");
     } finally {
       setIsSaving(false);
     }
@@ -238,7 +267,8 @@ export default function PreferencesPage() {
             Pet Preferences
           </h1>
           <p className="text-muted-foreground">
-            Tell us about your ideal pet companion to get personalized recommendations
+            Tell us about your ideal pet companion to get personalized
+            recommendations
           </p>
         </div>
 
@@ -268,14 +298,20 @@ export default function PreferencesPage() {
               <CardContent className="space-y-6">
                 {/* Species */}
                 <div>
-                  <Label className="text-base font-medium mb-3 block">Species</Label>
+                  <Label className="text-base font-medium mb-3 block">
+                    Species
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {speciesOptions.map((species) => (
                       <Badge
                         key={species}
-                        variant={preferences.species.includes(species) ? 'default' : 'outline'}
+                        variant={
+                          preferences.species.includes(species)
+                            ? "default"
+                            : "outline"
+                        }
                         className="cursor-pointer hover:bg-primary/80"
-                        onClick={() => handleArrayToggle('species', species)}
+                        onClick={() => handleArrayToggle("species", species)}
                       >
                         {species}
                       </Badge>
@@ -285,14 +321,20 @@ export default function PreferencesPage() {
 
                 {/* Size */}
                 <div>
-                  <Label className="text-base font-medium mb-3 block">Size</Label>
+                  <Label className="text-base font-medium mb-3 block">
+                    Size
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {sizeOptions.map((size) => (
                       <Badge
                         key={size}
-                        variant={preferences.size.includes(size) ? 'default' : 'outline'}
+                        variant={
+                          preferences.size.includes(size)
+                            ? "default"
+                            : "outline"
+                        }
                         className="cursor-pointer hover:bg-primary/80"
-                        onClick={() => handleArrayToggle('size', size)}
+                        onClick={() => handleArrayToggle("size", size)}
                       >
                         {size}
                       </Badge>
@@ -303,11 +345,14 @@ export default function PreferencesPage() {
                 {/* Age Range */}
                 <div>
                   <Label className="text-base font-medium mb-3 block">
-                    Age Range: {preferences.ageRange[0]} - {preferences.ageRange[1]} years
+                    Age Range: {preferences.ageRange[0]} -{" "}
+                    {preferences.ageRange[1]} years
                   </Label>
                   <Slider
                     value={preferences.ageRange}
-                    onValueChange={(value) => handleInputChange('ageRange', value as [number, number])}
+                    onValueChange={(value) =>
+                      handleInputChange("ageRange", value as [number, number])
+                    }
                     max={15}
                     min={0}
                     step={1}
@@ -317,14 +362,20 @@ export default function PreferencesPage() {
 
                 {/* Gender */}
                 <div>
-                  <Label className="text-base font-medium mb-3 block">Gender Preference</Label>
+                  <Label className="text-base font-medium mb-3 block">
+                    Gender Preference
+                  </Label>
                   <div className="flex gap-2">
                     {genderOptions.map((gender) => (
                       <Badge
                         key={gender}
-                        variant={preferences.gender.includes(gender) ? 'default' : 'outline'}
+                        variant={
+                          preferences.gender.includes(gender)
+                            ? "default"
+                            : "outline"
+                        }
                         className="cursor-pointer hover:bg-primary/80"
-                        onClick={() => handleArrayToggle('gender', gender)}
+                        onClick={() => handleArrayToggle("gender", gender)}
                       >
                         {gender}
                       </Badge>
@@ -348,14 +399,20 @@ export default function PreferencesPage() {
               <CardContent className="space-y-6">
                 {/* Temperament */}
                 <div>
-                  <Label className="text-base font-medium mb-3 block">Temperament</Label>
+                  <Label className="text-base font-medium mb-3 block">
+                    Temperament
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {temperamentOptions.map((trait) => (
                       <Badge
                         key={trait}
-                        variant={preferences.temperament.includes(trait) ? 'default' : 'outline'}
+                        variant={
+                          preferences.temperament.includes(trait)
+                            ? "default"
+                            : "outline"
+                        }
                         className="cursor-pointer hover:bg-primary/80"
-                        onClick={() => handleArrayToggle('temperament', trait)}
+                        onClick={() => handleArrayToggle("temperament", trait)}
                       >
                         {trait}
                       </Badge>
@@ -365,14 +422,22 @@ export default function PreferencesPage() {
 
                 {/* Activity Level */}
                 <div>
-                  <Label className="text-base font-medium mb-3 block">Activity Level</Label>
+                  <Label className="text-base font-medium mb-3 block">
+                    Activity Level
+                  </Label>
                   <div className="flex flex-wrap gap-2">
                     {activityLevelOptions.map((level) => (
                       <Badge
                         key={level}
-                        variant={preferences.activityLevel.includes(level) ? 'default' : 'outline'}
+                        variant={
+                          preferences.activityLevel.includes(level)
+                            ? "default"
+                            : "outline"
+                        }
                         className="cursor-pointer hover:bg-primary/80"
-                        onClick={() => handleArrayToggle('activityLevel', level)}
+                        onClick={() =>
+                          handleArrayToggle("activityLevel", level)
+                        }
                       >
                         {level}
                       </Badge>
@@ -385,9 +450,14 @@ export default function PreferencesPage() {
                   <Switch
                     id="special-needs"
                     checked={preferences.specialNeeds}
-                    onCheckedChange={(checked) => handleInputChange('specialNeeds', checked)}
+                    onCheckedChange={(checked) =>
+                      handleInputChange("specialNeeds", checked)
+                    }
                   />
-                  <Label htmlFor="special-needs" className="text-base font-medium">
+                  <Label
+                    htmlFor="special-needs"
+                    className="text-base font-medium"
+                  >
                     Open to pets with special needs
                   </Label>
                 </div>
@@ -408,8 +478,18 @@ export default function PreferencesPage() {
               <CardContent className="space-y-6">
                 {/* Housing Type */}
                 <div>
-                  <Label htmlFor="housing-type" className="text-base font-medium">Housing Type</Label>
-                  <Select value={preferences.housingType} onValueChange={(value) => handleInputChange('housingType', value)}>
+                  <Label
+                    htmlFor="housing-type"
+                    className="text-base font-medium"
+                  >
+                    Housing Type
+                  </Label>
+                  <Select
+                    value={preferences.housingType}
+                    onValueChange={(value) =>
+                      handleInputChange("housingType", value)
+                    }
+                  >
                     <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Select housing type" />
                     </SelectTrigger>
@@ -425,8 +505,15 @@ export default function PreferencesPage() {
 
                 {/* Yard Size */}
                 <div>
-                  <Label htmlFor="yard-size" className="text-base font-medium">Yard Size</Label>
-                  <Select value={preferences.yardSize} onValueChange={(value) => handleInputChange('yardSize', value)}>
+                  <Label htmlFor="yard-size" className="text-base font-medium">
+                    Yard Size
+                  </Label>
+                  <Select
+                    value={preferences.yardSize}
+                    onValueChange={(value) =>
+                      handleInputChange("yardSize", value)
+                    }
+                  >
                     <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Select yard size" />
                     </SelectTrigger>
@@ -442,8 +529,15 @@ export default function PreferencesPage() {
 
                 {/* Experience Level */}
                 <div>
-                  <Label htmlFor="experience" className="text-base font-medium">Experience Level</Label>
-                  <Select value={preferences.experienceLevel} onValueChange={(value) => handleInputChange('experienceLevel', value)}>
+                  <Label htmlFor="experience" className="text-base font-medium">
+                    Experience Level
+                  </Label>
+                  <Select
+                    value={preferences.experienceLevel}
+                    onValueChange={(value) =>
+                      handleInputChange("experienceLevel", value)
+                    }
+                  >
                     <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Select experience level" />
                     </SelectTrigger>
@@ -459,8 +553,18 @@ export default function PreferencesPage() {
 
                 {/* Time Available */}
                 <div>
-                  <Label htmlFor="time-available" className="text-base font-medium">Time Available Daily</Label>
-                  <Select value={preferences.timeAvailable} onValueChange={(value) => handleInputChange('timeAvailable', value)}>
+                  <Label
+                    htmlFor="time-available"
+                    className="text-base font-medium"
+                  >
+                    Time Available Daily
+                  </Label>
+                  <Select
+                    value={preferences.timeAvailable}
+                    onValueChange={(value) =>
+                      handleInputChange("timeAvailable", value)
+                    }
+                  >
                     <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Select time available" />
                     </SelectTrigger>
@@ -483,16 +587,18 @@ export default function PreferencesPage() {
                   <MapPin className="h-5 w-5" />
                   Location
                 </CardTitle>
-                <CardDescription>
-                  Help us find pets near you
-                </CardDescription>
+                <CardDescription>Help us find pets near you</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Location Type Toggle */}
                 <div className="flex items-center space-x-4">
                   <Button
                     type="button"
-                    variant={preferences.location.type === 'current' ? 'default' : 'outline'}
+                    variant={
+                      preferences.location.type === "current"
+                        ? "default"
+                        : "outline"
+                    }
                     onClick={getCurrentLocation}
                     disabled={isGettingLocation}
                     className="flex items-center gap-2"
@@ -507,21 +613,27 @@ export default function PreferencesPage() {
                   <span className="text-muted-foreground">or</span>
                   <Button
                     type="button"
-                    variant={preferences.location.type === 'manual' ? 'default' : 'outline'}
-                    onClick={() => handleLocationChange('type', 'manual')}
+                    variant={
+                      preferences.location.type === "manual"
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => handleLocationChange("type", "manual")}
                   >
                     Enter Manually
                   </Button>
                 </div>
 
-                {preferences.location.type === 'manual' && (
+                {preferences.location.type === "manual" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="city">City</Label>
                       <Input
                         id="city"
-                        value={preferences.location.city || ''}
-                        onChange={(e) => handleLocationChange('city', e.target.value)}
+                        value={preferences.location.city || ""}
+                        onChange={(e) =>
+                          handleLocationChange("city", e.target.value)
+                        }
                         placeholder="Enter your city"
                         className="mt-1"
                       />
@@ -530,8 +642,10 @@ export default function PreferencesPage() {
                       <Label htmlFor="state">State</Label>
                       <Input
                         id="state"
-                        value={preferences.location.state || ''}
-                        onChange={(e) => handleLocationChange('state', e.target.value)}
+                        value={preferences.location.state || ""}
+                        onChange={(e) =>
+                          handleLocationChange("state", e.target.value)
+                        }
                         placeholder="Enter your state"
                         className="mt-1"
                       />
@@ -540,8 +654,10 @@ export default function PreferencesPage() {
                       <Label htmlFor="zipCode">ZIP Code</Label>
                       <Input
                         id="zipCode"
-                        value={preferences.location.zipCode || ''}
-                        onChange={(e) => handleLocationChange('zipCode', e.target.value)}
+                        value={preferences.location.zipCode || ""}
+                        onChange={(e) =>
+                          handleLocationChange("zipCode", e.target.value)
+                        }
                         placeholder="Enter ZIP code"
                         className="mt-1"
                       />
@@ -549,17 +665,20 @@ export default function PreferencesPage() {
                   </div>
                 )}
 
-                {preferences.location.type === 'current' && preferences.location.coordinates && (
-                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    <div className="flex items-center gap-2 text-green-800">
-                      <CheckCircle className="h-4 w-4" />
-                      <span className="font-medium">Location detected</span>
+                {preferences.location.type === "current" &&
+                  preferences.location.coordinates && (
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 text-green-800">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="font-medium">Location detected</span>
+                      </div>
+                      <p className="text-sm text-green-600 mt-1">
+                        Coordinates:{" "}
+                        {preferences.location.coordinates[0].toFixed(4)},{" "}
+                        {preferences.location.coordinates[1].toFixed(4)}
+                      </p>
                     </div>
-                    <p className="text-sm text-green-600 mt-1">
-                      Coordinates: {preferences.location.coordinates[0].toFixed(4)}, {preferences.location.coordinates[1].toFixed(4)}
-                    </p>
-                  </div>
-                )}
+                  )}
 
                 {/* Max Distance */}
                 <div>
@@ -568,7 +687,9 @@ export default function PreferencesPage() {
                   </Label>
                   <Slider
                     value={[preferences.maxDistance]}
-                    onValueChange={(value) => handleInputChange('maxDistance', value[0])}
+                    onValueChange={(value) =>
+                      handleInputChange("maxDistance", value[0])
+                    }
                     max={200}
                     min={5}
                     step={5}
@@ -584,8 +705,8 @@ export default function PreferencesPage() {
             {/* Save Button */}
             <Card>
               <CardContent className="p-6">
-                <Button 
-                  onClick={handleSave} 
+                <Button
+                  onClick={handleSave}
                   disabled={isSaving || !hasUnsavedChanges}
                   className="w-full"
                   size="lg"
@@ -602,7 +723,7 @@ export default function PreferencesPage() {
                     </>
                   )}
                 </Button>
-                
+
                 {!hasUnsavedChanges && (
                   <p className="text-sm text-muted-foreground text-center mt-2">
                     All changes saved
@@ -620,19 +741,31 @@ export default function PreferencesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <a href="/recommendations">
                     <Star className="mr-2 h-4 w-4" />
                     View Recommendations
                   </a>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <a href="/pets">
                     <Heart className="mr-2 h-4 w-4" />
                     Browse All Pets
                   </a>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <a href="/dashboard">
                     <Home className="mr-2 h-4 w-4" />
                     Back to Dashboard
@@ -650,7 +783,9 @@ export default function PreferencesPage() {
                 <p>• Be specific about your preferences for better matches</p>
                 <p>• Consider your lifestyle and living situation</p>
                 <p>• Update your location for accurate distance calculations</p>
-                <p>• Save your preferences to get personalized recommendations</p>
+                <p>
+                  • Save your preferences to get personalized recommendations
+                </p>
               </CardContent>
             </Card>
           </div>

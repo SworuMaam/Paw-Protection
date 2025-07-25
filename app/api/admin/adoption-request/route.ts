@@ -21,11 +21,11 @@ async function GET(req: NextRequest) {
       ORDER BY aa.created_at DESC
     `);
 
-    return NextResponse.json(result.rows);
+    return NextResponse.json({ success: true, requests: result.rows });
   } catch (error) {
-    console.error("Failed to fetch adoption requests:", error);
+    console.error("GET /api/admin/adoption-request error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch adoption requests" },
+      { success: false, error: "Failed to fetch adoption requests" },
       { status: 500 }
     );
   } finally {
@@ -34,53 +34,52 @@ async function GET(req: NextRequest) {
 }
 
 async function PUT(req: NextRequest) {
-  const { requestId, status } = await req.json();
-
-  if (!requestId || !["Accepted", "Rejected"].includes(status)) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-  }
-
   const client = await db.connect();
 
   try {
+    const body = await req.json();
+    const { requestId, status } = body;
+
+    if (!requestId || !["Accepted", "Rejected"].includes(status)) {
+      return NextResponse.json({ success: false, error: "Invalid request data" }, { status: 400 });
+    }
+
+    // Check if adoption application exists
     const appRes = await client.query(
       "SELECT pet_id FROM adoption_applications WHERE id = $1",
       [requestId]
     );
 
-    const petId = appRes.rows[0]?.pet_id;
-
-    if (!petId) {
-      return NextResponse.json(
-        { error: "Application not found" },
-        { status: 404 }
-      );
+    if (appRes.rowCount === 0) {
+      return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
     }
+
+    const petId = appRes.rows[0].pet_id;
 
     // Update application status
     await client.query(
-      `UPDATE adoption_applications SET status = $1, updated_at = NOW() WHERE id = $2`,
+      "UPDATE adoption_applications SET status = $1, updated_at = NOW() WHERE id = $2",
       [status, requestId]
     );
 
     // Update pet availability if accepted or rejected
     if (status === "Accepted") {
       await client.query(
-        `UPDATE pets SET availability_status = 'Adopted', updated_at = NOW() WHERE id = $1`,
+        "UPDATE pets SET availability_status = 'Adopted', updated_at = NOW() WHERE id = $1",
         [petId]
       );
     } else if (status === "Rejected") {
       await client.query(
-        `UPDATE pets SET availability_status = 'Available', updated_at = NOW() WHERE id = $1`,
+        "UPDATE pets SET availability_status = 'Available', updated_at = NOW() WHERE id = $1",
         [petId]
       );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to update request:", error);
+    console.error("PUT /api/admin/adoption-request error:", error);
     return NextResponse.json(
-      { error: "Failed to update request" },
+      { success: false, error: "Failed to update adoption request" },
       { status: 500 }
     );
   } finally {
