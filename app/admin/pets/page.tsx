@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 
 const speciesOptions = ["Dog", "Cat"];
 const breedOptions: Record<string, string[]> = {
-  Dog: ["Labrador", "Beagle", "Poodle", "Bulldog", "Golden Retriever"],
+  Dog: ["Labrador", "Beagle", "Poodle", "Bulldog", "Golden Retriever","German Shepherd"],
   Cat: ["Persian", "Siamese", "Maine Coon", "Bengal", "Ragdoll"],
 };
 const sizeOptions = ["Small", "Medium", "Large", "Extra Large"];
