@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hashPassword, generateToken, JWTPayload } from '@/lib/auth';
+import { hashPassword, generateToken } from '@/lib/auth';
 import pool from '@/lib/db';
+import { geocodeAddressNominatim } from '@/lib/geocode';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,13 +9,12 @@ export async function POST(request: NextRequest) {
       name,
       email,
       password,
-      location,
+      location: locationInput, // user input location string
       isFosterParent,
       fosterCapacity,
       contactNumber,
     } = await request.json();
 
-    // Basic presence check
     if (!name || !email || !password || !contactNumber) {
       return NextResponse.json(
         { error: 'Name, email, password, and contact number are required.' },
@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate name: only letters and optional spaces
     const nameRegex = /^[A-Za-z\s]+$/;
     if (!nameRegex.test(name)) {
       return NextResponse.json(
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -40,7 +38,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate phone number: exactly 10 digits
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(contactNumber)) {
       return NextResponse.json(
@@ -49,7 +46,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Foster-specific validation
     if (
       isFosterParent &&
       (!fosterCapacity || typeof fosterCapacity !== 'number' || fosterCapacity < 1)
@@ -60,23 +56,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // --- Geocode user input location ---
+    let locationJSON = null;
+    if (locationInput) {
+      const geoLocation = await geocodeAddressNominatim(locationInput);
+
+      if (!geoLocation) {
+        return NextResponse.json(
+          { error: 'Invalid location provided. Please enter a valid city or address.' },
+          { status: 400 }
+        );
+      }
+
+      locationJSON = {
+        address: geoLocation.address,
+        latitude: geoLocation.latitude,
+        longitude: geoLocation.longitude,
+      };
+    }
+
     const role = isFosterParent ? 'foster-user' : 'user';
     const hashedPassword = await hashPassword(password);
 
     const client = await pool.connect();
     try {
       // Check if user already exists
-      const existingUser = await client.query(
-        'SELECT id FROM users WHERE email = $1',
-        [email]
-      );
+      const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [email]);
       if (existingUser.rows.length > 0) {
-        return NextResponse.json(
-          { error: 'User with this email already exists' },
-          { status: 409 }
-        );
+        return NextResponse.json({ error: 'User with this email already exists' }, { status: 409 });
       }
 
+      // Insert user with location JSONB
       const result = await client.query(
         `INSERT INTO users 
           (name, email, password, location, contact_number, role, foster_capacity) 
@@ -86,14 +96,15 @@ export async function POST(request: NextRequest) {
           name,
           email,
           hashedPassword,
-          location,
+          locationJSON,
           contactNumber,
           role,
-          isFosterParent ? Number(fosterCapacity) : null,
+          isFosterParent ? fosterCapacity : null,
         ]
       );
 
       const newUser = result.rows[0];
+
       const token = await generateToken({
         userId: newUser.id,
         email: newUser.email,
@@ -116,12 +127,11 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
 
-      // Set HTTP-only cookie
       response.cookies.set('auth-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60, // 1 week
+        maxAge: 7 * 24 * 60 * 60,
       });
 
       return response;

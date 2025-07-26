@@ -77,23 +77,20 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   species TEXT[] DEFAULT '{}',
-  breeds TEXT[] DEFAULT '{}',
   size TEXT[] DEFAULT '{}',
   age_range INTEGER[] DEFAULT '{0,15}',
   gender TEXT[] DEFAULT '{}',
   temperament TEXT[] DEFAULT '{}',
   activity_level TEXT[] DEFAULT '{}',
-  special_needs BOOLEAN DEFAULT FALSE,
   housing_type VARCHAR(100),
   yard_size VARCHAR(100),
   experience_level VARCHAR(100),
   time_available VARCHAR(100),
-  location JSONB,
-  max_distance INTEGER DEFAULT 50,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)
 );
+
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -105,17 +102,4 @@ CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id)
 CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
 CREATE INDEX IF NOT EXISTS idx_pets_temperament ON pets USING GIN (temperament);
 
--- Sample pet data (updated to match new schema)
--- INSERT INTO pets (
---   name, species, breed, age, gender, size, temperament, activity_level,
---   description, image, location_address, location_coordinates, diet_type, diet_frequency,
---   space_requirements, adoption_fee
--- ) VALUES (
---   'Luna', 'Dog', 'Golden Retriever', 3, 'Female', 'Large',
---   ARRAY['Friendly', 'Energetic', 'Loyal'], 'High',
---   'Luna is a beautiful Golden Retriever who loves playing fetch and swimming. She''s great with kids and other dogs.',
---   'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg',
---   'San Francisco, CA', NULL,
---   'High-quality dry food', 'Twice daily',
---   'Requires a medium-to-large fenced yard', 250
--- );
+

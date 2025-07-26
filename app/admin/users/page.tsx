@@ -68,7 +68,11 @@ export default function ManageUsersPage() {
                     <td className="p-2">
                       <Badge variant="outline">{user.role}</Badge>
                     </td>
-                    <td className="p-2">{user.location || "—"}</td>
+                    <td className="p-2">
+                      {typeof user.location === "string"
+                        ? user.location
+                        : user.location?.address || "—"}
+                    </td>
                     <td className="p-2">{user.contact_number || "—"}</td>
                     <td className="p-2">
                       {new Date(user.created_at).toLocaleDateString()}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   MapPin,
@@ -76,31 +75,24 @@ export default function PreferencesPage() {
   const [preferences, setPreferences] = useState<UserPreferences>({
     userId: "",
     species: [],
-    breeds: [],
     size: [],
     ageRange: [0, 15],
     gender: [],
     temperament: [],
     activityLevel: [],
-    specialNeeds: false,
     housingType: "",
     yardSize: "",
     experienceLevel: "",
     timeAvailable: "",
-    location: {
-      type: "manual",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-    },
-    maxDistance: 50,
   });
 
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const geocodeTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isLoading && (!user || !isUser)) {
@@ -125,7 +117,6 @@ export default function PreferencesPage() {
         if (data.preferences) {
           setPreferences(data.preferences);
         } else {
-          // Set default userId for new preferences
           setPreferences((prev) => ({ ...prev, userId: user!.id }));
         }
       }
@@ -154,67 +145,6 @@ export default function PreferencesPage() {
       setHasUnsavedChanges(true);
       return { ...prev, [field]: value };
     });
-  };
-
-  const handleLocationChange = (field: string, value: any) => {
-    setPreferences((prev) => {
-      setHasUnsavedChanges(true);
-      return {
-        ...prev,
-        location: { ...prev.location, [field]: value },
-      };
-    });
-  };
-
-  const getCurrentLocation = async () => {
-    setIsGettingLocation(true);
-
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by this browser");
-      setIsGettingLocation(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-
-          // Mock reverse geocoding - in production, use a real service
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          const mockAddress = "Current Location";
-          const mockCity = "Your City";
-          const mockState = "Your State";
-
-          setPreferences((prev) => ({
-            ...prev,
-            location: {
-              type: "current",
-              coordinates: [latitude, longitude],
-              address: mockAddress,
-              city: mockCity,
-              state: mockState,
-            },
-          }));
-
-          setHasUnsavedChanges(true);
-          toast.success("Location detected successfully");
-        } catch (error) {
-          toast.error("Failed to get location details");
-        } finally {
-          setIsGettingLocation(false);
-        }
-      },
-      (error) => {
-        toast.error("Unable to retrieve your location");
-        setIsGettingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
-      }
-    );
   };
 
   const handleSave = async () => {
@@ -444,23 +374,6 @@ export default function PreferencesPage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Special Needs */}
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="special-needs"
-                    checked={preferences.specialNeeds}
-                    onCheckedChange={(checked) =>
-                      handleInputChange("specialNeeds", checked)
-                    }
-                  />
-                  <Label
-                    htmlFor="special-needs"
-                    className="text-base font-medium"
-                  >
-                    Open to pets with special needs
-                  </Label>
-                </div>
               </CardContent>
             </Card>
 
@@ -576,125 +489,6 @@ export default function PreferencesPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Location */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Location
-                </CardTitle>
-                <CardDescription>Help us find pets near you</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Location Type Toggle */}
-                <div className="flex items-center space-x-4">
-                  <Button
-                    type="button"
-                    variant={
-                      preferences.location.type === "current"
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={getCurrentLocation}
-                    disabled={isGettingLocation}
-                    className="flex items-center gap-2"
-                  >
-                    {isGettingLocation ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <MapPin className="h-4 w-4" />
-                    )}
-                    Use Current Location
-                  </Button>
-                  <span className="text-muted-foreground">or</span>
-                  <Button
-                    type="button"
-                    variant={
-                      preferences.location.type === "manual"
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => handleLocationChange("type", "manual")}
-                  >
-                    Enter Manually
-                  </Button>
-                </div>
-
-                {preferences.location.type === "manual" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={preferences.location.city || ""}
-                        onChange={(e) =>
-                          handleLocationChange("city", e.target.value)
-                        }
-                        placeholder="Enter your city"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="state">State</Label>
-                      <Input
-                        id="state"
-                        value={preferences.location.state || ""}
-                        onChange={(e) =>
-                          handleLocationChange("state", e.target.value)
-                        }
-                        placeholder="Enter your state"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="zipCode">ZIP Code</Label>
-                      <Input
-                        id="zipCode"
-                        value={preferences.location.zipCode || ""}
-                        onChange={(e) =>
-                          handleLocationChange("zipCode", e.target.value)
-                        }
-                        placeholder="Enter ZIP code"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {preferences.location.type === "current" &&
-                  preferences.location.coordinates && (
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 text-green-800">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="font-medium">Location detected</span>
-                      </div>
-                      <p className="text-sm text-green-600 mt-1">
-                        Coordinates:{" "}
-                        {preferences.location.coordinates[0].toFixed(4)},{" "}
-                        {preferences.location.coordinates[1].toFixed(4)}
-                      </p>
-                    </div>
-                  )}
-
-                {/* Max Distance */}
-                <div>
-                  <Label className="text-base font-medium mb-3 block">
-                    Maximum Distance: {preferences.maxDistance} miles
-                  </Label>
-                  <Slider
-                    value={[preferences.maxDistance]}
-                    onValueChange={(value) =>
-                      handleInputChange("maxDistance", value[0])
-                    }
-                    max={200}
-                    min={5}
-                    step={5}
-                    className="mt-2"
-                  />
                 </div>
               </CardContent>
             </Card>

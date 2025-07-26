@@ -46,6 +46,13 @@ export default function UserProfile() {
     );
   }
 
+  const getLocationText = () => {
+    if (!user.location) return "Not provided";
+    if (typeof user.location === "string") return user.location;
+    if (typeof user.location === "object" && user.location.address) return user.location.address;
+    return "Invalid location format";
+  };
+
   return (
     <div className="min-h-screen bg-muted/30 py-10 px-4">
       <Card className="max-w-3xl mx-auto">
@@ -65,7 +72,7 @@ export default function UserProfile() {
           </div>
           <div>
             <span className="font-semibold">Location:</span>{" "}
-            {user.location || "Not provided"}
+            {getLocationText()}
           </div>
           <div>
             <span className="font-semibold">Contact Number:</span>{" "}
@@ -73,7 +80,7 @@ export default function UserProfile() {
           </div>
           <div>
             <span className="font-semibold">Adopted Pets:</span>{" "}
-            {user.adoptedPetsCount}
+            {user.adoptedPetsCount ?? 0}
           </div>
           {user.role === "foster-user" && (
             <div>

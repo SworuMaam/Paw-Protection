@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { comparePassword, generateToken } from '@/lib/auth'; // generateToken is now async
-import pool from '@/lib/db'; // Assuming this is your database connection
+import { comparePassword, generateToken } from '@/lib/auth';
+import pool from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,13 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if it's admin login
+    // Admin Login Shortcut
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const token = await generateToken({ // Await generateToken
+      const token = await generateToken({
         userId: 'admin',
         email: process.env.ADMIN_EMAIL!,
         role: 'admin',
-        name: 'Administrator'
+        name: 'Administrator',
       });
 
       const response = NextResponse.json({
@@ -28,26 +28,27 @@ export async function POST(request: NextRequest) {
           id: 'admin',
           email: process.env.ADMIN_EMAIL,
           role: 'admin',
-          name: 'Administrator'
+          name: 'Administrator',
+          location: null,
+          createdAt: new Date().toISOString(),
         },
       });
 
-      // Set HTTP-only cookie
       response.cookies.set('auth-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 // 7 days
+        maxAge: 7 * 24 * 60 * 60,
       });
 
       return response;
     }
 
-    // Check user in database
     const client = await pool.connect();
     try {
       const result = await client.query(
-        'SELECT id, email, password, name, role, location, created_at FROM users WHERE email = $1',
+        `SELECT id, email, password, name, role, location, created_at
+         FROM users WHERE email = $1`,
         [email]
       );
 
@@ -68,31 +69,36 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const token = await generateToken({ // Await generateToken
+      const token = await generateToken({
         userId: user.id,
         email: user.email,
-        role: user.role, // Use the role from the database
-        name: user.name
+        role: user.role,
+        name: user.name,
       });
+
+      // Safely parse and return location
+      const safeLocation =
+        typeof user.location === 'object' && user.location !== null
+          ? user.location
+          : null;
 
       const response = NextResponse.json({
         success: true,
         user: {
           id: user.id,
-          email: user.email, 
-          role: user.role, // Return the correct role
+          email: user.email,
+          role: user.role,
           name: user.name,
-          location: user.location,
-          createdAt: user.created_at
+          location: safeLocation, // now guaranteed to be object or null
+          createdAt: user.created_at,
         },
       });
 
-      // Set HTTP-only cookie
       response.cookies.set('auth-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 // 7 days
+        maxAge: 7 * 24 * 60 * 60,
       });
 
       return response;

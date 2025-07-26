@@ -2,10 +2,16 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  location?: string;
+  location: string | GeoLocation | null;
   role: 'user' | 'admin';
   preferences?: UserPreferences;
   createdAt: string;
+}
+
+export interface GeoLocation {
+  address: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface UserPreferences {

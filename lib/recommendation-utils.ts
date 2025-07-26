@@ -38,25 +38,23 @@ export async function GET(req: NextRequest) {
 
     // Build the SQL query dynamically with parameters for species filtering and others
     let sql = `
-      SELECT 
-        pets.*,
-        users.location AS owner_location,
-        -- Calculate match score (simple example, you can refine logic)
-        ( 
-          -- Score 50 if species matches preference
-          CASE WHEN $1::text[] IS NULL OR pets.species = ANY($1::text[]) THEN 50 ELSE 0 END +
-          -- Bonus points for availability
-          CASE WHEN pets.availability_status = 'Available' THEN 30 ELSE 0 END +
-          -- Bonus points for other conditions, e.g. age preference
-          CASE WHEN pets.age BETWEEN $2 AND $3 THEN 20 ELSE 0 END
-        ) AS score,
-        -- Calculate distance (in miles) if user.location and pets.location_address are available
-        NULL::float AS distance,
-        ARRAY[]::text[] AS match_reasons
-      FROM pets
-      LEFT JOIN users ON pets.foster_parent_id = users.id
-      WHERE pets.availability_status IN ('Available', 'Fostered_Available')
-    `;
+  SELECT 
+    pets.*,
+    users.location->>'address' AS owner_address,
+    users.location->>'latitude' AS owner_latitude,
+    users.location->>'longitude' AS owner_longitude,
+    (
+      CASE WHEN $1::text[] IS NULL OR pets.species = ANY($1::text[]) THEN 50 ELSE 0 END +
+      CASE WHEN pets.availability_status = 'Available' THEN 30 ELSE 0 END +
+      CASE WHEN pets.age BETWEEN $2 AND $3 THEN 20 ELSE 0 END
+    ) AS score,
+    NULL::float AS distance,
+    ARRAY[]::text[] AS match_reasons
+  FROM pets
+  LEFT JOIN users ON pets.foster_parent_id = users.id
+  WHERE pets.availability_status IN ('Available', 'Fostered_Available')
+`;
+
 
     const params: any[] = [speciesFilter, preferences.age_range[0], preferences.age_range[1]];
 
