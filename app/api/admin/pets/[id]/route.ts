@@ -15,9 +15,9 @@ export const GET = withAuth(async (req, { params }) => {
     }
 
     return NextResponse.json({ pet });
-  } catch (error) {
+  } catch (error: any) {
     console.error("GET pet error:", error);
-    return NextResponse.json({ error: "Failed to fetch pet" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch pet", details: error.message }, { status: 500 });
   }
 }, { requiredRole: "admin" });
 
@@ -27,48 +27,62 @@ export const PUT = withAuth(async (req: NextRequest, { params }) => {
   const form = await req.formData();
 
   try {
-    const fields = [
-      "name",
-      "breed",
-      "description",
-      "location_address",
-      "availability_status",
-      "age",
-      "size",
-      "gender",
-      "species",
-      "activity_level",
-      "adoption_fee"
+    const temperament = form.getAll("temperament");
+    const foster_parent_id = form.get("foster_parent_id") || null;
+
+    // Convert temperament array into PostgreSQL array literal format
+    const pgTemperamentArray = `{${temperament.map((t) => `"${t}"`).join(",")}}`;
+
+    const values = [
+      form.get("description"),
+      form.get("location_address"),
+      form.get("availability_status"),
+      Number(form.get("age")),
+      form.get("size"),
+      form.get("gender"),
+      form.get("activity_level"),
+      form.get("diet_type"),
+      form.get("diet_frequency"),
+      form.get("space_requirements"),
+      Number(form.get("adoption_fee")),
+      foster_parent_id,
+      pgTemperamentArray,
+      Number(petId),
     ];
 
-    const values = fields.map(field => form.get(field));
-    values.push(petId); // for WHERE clause
+    console.log("Updating pet with values:", values);
 
     await db.query(
       `
       UPDATE pets SET 
-        name = $1,
-        breed = $2,
-        description = $3,
-        location_address = $4,
-        availability_status = $5,
-        age = $6,
-        size = $7,
-        gender = $8,
-        species = $9,
-        activity_level = $10,
-        adoption_fee = $11
-      WHERE id = $12
+        description = $1,
+        location_address = $2,
+        availability_status = $3,
+        age = $4,
+        size = $5,
+        gender = $6,
+        activity_level = $7,
+        diet_type = $8,
+        diet_frequency = $9,
+        space_requirements = $10,
+        adoption_fee = $11,
+        foster_parent_id = $12,
+        temperament = $13
+      WHERE id = $14
       `,
       values
     );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("PUT update error:", error);
-    return NextResponse.json({ error: "Failed to update pet" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update pet", details: error.message },
+      { status: 500 }
+    );
   }
 }, { requiredRole: "admin" });
+
 
 // DELETE: Remove a pet by ID (admin only)
 export const DELETE = withAuth(async (req, { params }) => {
@@ -83,8 +97,8 @@ export const DELETE = withAuth(async (req, { params }) => {
     }
 
     return NextResponse.json({ message: "Pet deleted", pet: deleted });
-  } catch (error) {
+  } catch (error: any) {
     console.error("DELETE pet error:", error);
-    return NextResponse.json({ error: "Failed to delete pet" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete pet", details: error.message }, { status: 500 });
   }
 }, { requiredRole: "admin" });
