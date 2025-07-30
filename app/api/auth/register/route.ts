@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 import pool from '@/lib/db';
 import { geocodeAddressNominatim } from '@/lib/geocode';
 
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       name,
       email,
       password,
-      location: locationInput, // user input location string
+      location: locationInput,
       isFosterParent,
       fosterCapacity,
       contactNumber,
@@ -32,18 +32,14 @@ export async function POST(request: NextRequest) {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid email format.' }, { status: 400 });
     }
 
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(contactNumber)) {
-      return NextResponse.json(
-        { error: 'Contact number must be exactly 10 digits.' },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        error: 'Contact number must be exactly 10 digits.',
+      }, { status: 400 });
     }
 
     if (
@@ -56,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Geocode user input location ---
+    // Geocode
     let locationJSON = null;
     if (locationInput) {
       const geoLocation = await geocodeAddressNominatim(locationInput);
@@ -80,18 +76,15 @@ export async function POST(request: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // Check if user already exists
       const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [email]);
       if (existingUser.rows.length > 0) {
         return NextResponse.json({ error: 'User with this email already exists' }, { status: 409 });
       }
 
-      // Insert user with location JSONB
-      const result = await client.query(
+      await client.query(
         `INSERT INTO users 
           (name, email, password, location, contact_number, role, foster_capacity) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) 
-         RETURNING id, name, email, location, contact_number, role, foster_capacity, created_at`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           name,
           email,
@@ -103,38 +96,7 @@ export async function POST(request: NextRequest) {
         ]
       );
 
-      const newUser = result.rows[0];
-
-      const token = await generateToken({
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-        name: newUser.name,
-      });
-
-      const response = NextResponse.json(
-        {
-          success: true,
-          user: {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            location: newUser.location,
-            createdAt: newUser.created_at,
-            role: newUser.role,
-          },
-        },
-        { status: 201 }
-      );
-
-      response.cookies.set('auth-token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60,
-      });
-
-      return response;
+      return NextResponse.json({ success: true }, { status: 201 });
     } finally {
       client.release();
     }

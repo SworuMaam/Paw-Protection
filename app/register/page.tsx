@@ -90,19 +90,8 @@ export default function RegisterPage() {
 
       // Check the role of user cand redirect to respective dashboard
       if (result.success) {
-        // Correctly redirect based on the role returned from the backend
-        let redirectUrl = "/dashboard";
-        if (result?.user?.role == "foster-user") {
-          redirectUrl = "/foster-dashboard";
-        } else if (result.user?.role === "admin") {
-          redirectUrl = "/admin";
-        }
-        toast.success(
-          `Welcome, ${
-            result?.user?.role == "foster-user" ? "Foster Parent" : "User"
-          }!`
-        );
-        router.push(redirectUrl);
+        toast.success("Account created successfully. Please log in.");
+        router.push("/login");
       } else {
         setError(result.error || "Registration failed");
       }
@@ -133,26 +122,56 @@ export default function RegisterPage() {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        console.log("Detected coordinates:", latitude, longitude); // Debug
+
         try {
-          // Mock reverse geocoding - replace with actual service
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          const mockLocation = "San Francisco, CA";
+          const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en&countrycodes=NP`;
+
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": "PetAdoptApp/1.0 (your.email@example.com)", // <-- Use real email
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch location from Nominatim");
+          }
+
+          const data = await response.json();
+          const displayName = data?.display_name;
+
+          if (!displayName) {
+            throw new Error("No address found in response");
+          }
 
           setFormData((prev) => ({
             ...prev,
-            location: mockLocation,
+            location: displayName,
           }));
 
-          toast.success("Location detected successfully");
+          toast.success("Detected your current location");
         } catch (error) {
-          toast.error("Failed to get location details");
+          console.error("Reverse geocoding failed:", error);
+          toast.error("Could not retrieve address");
         } finally {
           setIsGettingLocation(false);
         }
       },
       (error) => {
-        toast.error("Unable to retrieve your location");
+        console.error("Geolocation error:", error);
+        if (error.code === 1) {
+          toast.error("Permission denied. Please allow location access.");
+        } else {
+          toast.error("Unable to get your current location.");
+        }
         setIsGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true, // Ask for GPS-level accuracy
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   };

@@ -61,11 +61,13 @@ export async function POST(req: Request) {
       foster_parent_id = fosterId;
 
       // Override location_address with foster parent's location if available
+      const fosterLocation = fosterCheck.rows[0].location;
       if (
-        fosterCheck.rows[0].location &&
-        fosterCheck.rows[0].location.trim() !== ""
+        fosterLocation &&
+        typeof fosterLocation.address === "string" &&
+        fosterLocation.address.trim() !== ""
       ) {
-        location_address = fosterCheck.rows[0].location;
+        location_address = fosterLocation.address;
       }
     }
 

@@ -1,21 +1,20 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/types'; // Corrected import path for User interface
+import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>; // Added user?: User
-  register: (data: RegisterPayload) => Promise<{ success: boolean; error?: string; user?: User }>; // Updated to use a detailed payload type
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  register: (data: RegisterPayload) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  isFosterUser: boolean; // Added for foster user role
+  isFosterUser: boolean;
   isUser: boolean;
 }
 
-// Define a more detailed registration payload type
 export interface RegisterPayload {
   name: string;
   email: string;
@@ -38,10 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
-
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
@@ -57,18 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
-
       if (response.ok) {
         setUser(data.user);
-        return { success: true, user: data.user }; // Ensure user is returned here
+        return { success: true, user: data.user };
       } else {
         return { success: false, error: data.error };
       }
@@ -82,18 +75,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(userData),
       });
 
       const data = await response.json();
-
       if (response.ok) {
-        setUser(data.user);
-        return { success: true, user: data.user }; // Ensure user is returned here
+        return { success: true };
       } else {
         return { success: false, error: data.error };
       }
@@ -113,15 +102,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
-      // Redirect to login page after logout to clear state and prevent access to protected routes.
       window.location.href = '/login';
     }
   };
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.role == 'admin';
-  const isUser = user?.role == 'user';
-  const isFosterUser = user?.role == 'foster-user'; // Derived from user role
+  const isAdmin = user?.role === 'admin';
+  const isUser = user?.role === 'user';
+  const isFosterUser = user?.role === 'foster-user';
 
   return (
     <AuthContext.Provider
@@ -132,9 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isLoading,
         isAuthenticated,
-        isFosterUser, // Include in context value
         isAdmin,
         isUser,
+        isFosterUser,
       }}
     >
       {children}

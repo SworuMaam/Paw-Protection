@@ -28,15 +28,47 @@ export const PUT = withAuth(async (req: NextRequest, { params }) => {
 
   try {
     const temperament = form.getAll("temperament");
-    const foster_parent_id = form.get("foster_parent_id") || null;
+    const foster_parent_id_raw = form.get("foster_parent_id")?.toString().trim();
+    const foster_parent_id = foster_parent_id_raw ? Number(foster_parent_id_raw) : null;
 
-    // Convert temperament array into PostgreSQL array literal format
     const pgTemperamentArray = `{${temperament.map((t) => `"${t}"`).join(",")}}`;
+
+    let location_address = form.get("location_address")?.toString().trim() || "";
+    let availability_status = form.get("availability_status")?.toString().trim();
+
+    // If foster parent assigned, fetch their location
+    if (foster_parent_id) {
+      const fosterCheck = await db.query(
+        `SELECT location FROM users WHERE id = $1 AND role = 'foster-user'`,
+        [foster_parent_id]
+      );
+
+      if (fosterCheck.rowCount === 0) {
+        return NextResponse.json(
+          { error: "Foster parent not found or not a foster user" },
+          { status: 400 }
+        );
+      }
+
+      const fosterLocation = fosterCheck.rows[0].location;
+
+      if (
+        fosterLocation &&
+        typeof fosterLocation === "object" &&
+        typeof fosterLocation.address === "string" &&
+        fosterLocation.address.trim() !== ""
+      ) {
+        location_address = fosterLocation.address;
+      }
+
+      // Force availability to Fostered_Not_Available if foster assigned
+      availability_status = "Fostered_Not_Available";
+    }
 
     const values = [
       form.get("description"),
-      form.get("location_address"),
-      form.get("availability_status"),
+      location_address,
+      availability_status,
       Number(form.get("age")),
       form.get("size"),
       form.get("gender"),
@@ -49,8 +81,6 @@ export const PUT = withAuth(async (req: NextRequest, { params }) => {
       pgTemperamentArray,
       Number(petId),
     ];
-
-    console.log("Updating pet with values:", values);
 
     await db.query(
       `
@@ -82,6 +112,7 @@ export const PUT = withAuth(async (req: NextRequest, { params }) => {
     );
   }
 }, { requiredRole: "admin" });
+
 
 
 // DELETE: Remove a pet by ID (admin only)
