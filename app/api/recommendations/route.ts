@@ -1,9 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { getTokenFromRequest, verifyToken } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import pool from "@/lib/db";
+import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 
 // Haversine formula to calculate distance between two coordinates
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+function haversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
   const toRad = (x: number) => (x * Math.PI) / 180;
   const R = 3958.8; // Earth radius in miles
   const dLat = toRad(lat2 - lat1);
@@ -17,42 +22,68 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export async function GET(req: NextRequest) {
   try {
+    // Step 1: Authenticate the user
     const token = getTokenFromRequest(req);
-    if (!token) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!token)
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
 
     const user = await verifyToken(token);
-    if (!user?.userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!user?.userId)
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
 
     const userId = user.userId;
 
-    // Fetch user preferences
-    const prefResult = await pool.query('SELECT * FROM user_preferences WHERE user_id = $1', [userId]);
+    // Step 2: Get user preferences
+    const prefResult = await pool.query(
+      "SELECT * FROM user_preferences WHERE user_id = $1",
+      [userId]
+    );
     if (prefResult.rowCount === 0) {
-      return NextResponse.json({ success: false, error: 'Set preferences first' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Set preferences first" },
+        { status: 400 }
+      );
     }
     const preferences = prefResult.rows[0];
 
-    // Fetch user location (as JSON)
-    const userResult = await pool.query('SELECT location FROM users WHERE id = $1', [userId]);
+    // Step 3: Get user location (includes district)
+    const userResult = await pool.query(
+      "SELECT location FROM users WHERE id = $1",
+      [userId]
+    );
     const locationRaw = userResult.rows[0]?.location;
     if (!locationRaw) {
-      return NextResponse.json({ success: false, error: 'User location not set in profile' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "User location not set in profile" },
+        { status: 400 }
+      );
     }
 
     let location;
     try {
-      location = typeof locationRaw === 'string' ? JSON.parse(locationRaw) : locationRaw;
+      location =
+        typeof locationRaw === "string" ? JSON.parse(locationRaw) : locationRaw;
     } catch {
-      return NextResponse.json({ success: false, error: 'Invalid location format' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid location format" },
+        { status: 400 }
+      );
     }
 
     const userLat = location.latitude;
     const userLon = location.longitude;
+    const userDistrict = location.district;
     const maxDistance = 50; // miles
 
-    const defaultCenter = { lat: 27.7047, lon: 85.3078 }; // Kathmandu fallback
+    const defaultCenter = { lat: 27.7047, lon: 85.3078 }; // Kathmandu fallback if pet/foster has no location
 
-    // Get pets with optional foster parent
+    // Step 4: Fetch all pets + foster parent locations
     const petsResult = await pool.query(`
       SELECT
         pets.*,
@@ -62,90 +93,144 @@ export async function GET(req: NextRequest) {
       WHERE pets.availability_status IN ('Available', 'Fostered_Available')
     `);
 
-    const recommendations = petsResult.rows
-      .map(pet => {
-        let petLat = defaultCenter.lat;
-        let petLon = defaultCenter.lon;
+    const sameDistrict: any[] = [];
+    const otherDistrict: any[] = [];
 
-        // Try foster parent's coordinates
-        if (pet.foster_location) {
-          try {
-            const fosterLoc = typeof pet.foster_location === 'string' ? JSON.parse(pet.foster_location) : pet.foster_location;
-            petLat = fosterLoc.latitude;
-            petLon = fosterLoc.longitude;
-          } catch {
-            // skip if invalid
-          }
-        }
+    // Step 5: Process each pet and calculate match score + distance
+    for (const pet of petsResult.rows) {
+      let petLat = defaultCenter.lat;
+      let petLon = defaultCenter.lon;
+      let petDistrict = "Unknown";
 
-        // Fallback to pet's own location
-        else if (pet.location) {
-          try {
-            const petLoc = typeof pet.location === 'string' ? JSON.parse(pet.location) : pet.location;
+      try {
+        const fosterLoc = pet.foster_location
+          ? typeof pet.foster_location === "string"
+            ? JSON.parse(pet.foster_location)
+            : pet.foster_location
+          : null;
+
+        if (fosterLoc?.latitude && fosterLoc?.longitude) {
+          petLat = fosterLoc.latitude;
+          petLon = fosterLoc.longitude;
+          petDistrict = fosterLoc.district || petDistrict;
+        } else if (pet.location) {
+          const petLoc =
+            typeof pet.location === "string"
+              ? JSON.parse(pet.location)
+              : pet.location;
+          if (petLoc?.latitude && petLoc?.longitude) {
             petLat = petLoc.latitude;
             petLon = petLoc.longitude;
-          } catch {
-            // skip if invalid
+            petDistrict = petLoc.district || petDistrict;
           }
         }
+      } catch {
+        // Skip if location is malformed
+        continue;
+      }
 
-        const distance = haversineDistance(userLat, userLon, petLat, petLon);
-        if (distance > maxDistance) return null;
+      const distance = haversineDistance(userLat, userLon, petLat, petLon);
+      if (distance > maxDistance) continue; // Skip pets too far
 
-        // Match scoring
-        const S = preferences.species.length === 0 || preferences.species.includes(pet.species) ? 25 : 0;
-        const Z = preferences.size.length === 0 || preferences.size.includes(pet.size) ? 20 : 0;
+      // Step 6: Match scoring based on preferences
+      const S =
+        preferences.species.length === 0 ||
+        preferences.species.includes(pet.species)
+          ? 25
+          : 0;
+      const Z =
+        preferences.size.length === 0 || preferences.size.includes(pet.size)
+          ? 20
+          : 0;
 
-        let A = 0;
-        if (pet.age >= preferences.age_range[0] && pet.age <= preferences.age_range[1]) {
-          const mid = (preferences.age_range[0] + preferences.age_range[1]) / 2;
-          const diff = Math.abs(pet.age - mid);
-          const maxDiff = (preferences.age_range[1] - preferences.age_range[0]) / 2 || 1;
-          A = 15 * (1 - diff / maxDiff);
-        }
+      let A = 0;
+      if (
+        pet.age >= preferences.age_range[0] &&
+        pet.age <= preferences.age_range[1]
+      ) {
+        const mid = (preferences.age_range[0] + preferences.age_range[1]) / 2;
+        const diff = Math.abs(pet.age - mid);
+        const maxDiff =
+          (preferences.age_range[1] - preferences.age_range[0]) / 2 || 1;
+        A = 15 * (1 - diff / maxDiff);
+      }
 
-        const G = preferences.gender.length === 0 || preferences.gender.includes(pet.gender) ? 10 : 0;
-        const L = preferences.activity_level.length === 0 || preferences.activity_level.includes(pet.activity_level) ? 15 : 0;
+      const G =
+        preferences.gender.length === 0 ||
+        preferences.gender.includes(pet.gender)
+          ? 10
+          : 0;
+      const L =
+        preferences.activity_level.length === 0 ||
+        preferences.activity_level.includes(pet.activity_level)
+          ? 15
+          : 0;
 
-        const temperamentPrefs = preferences.temperament || [];
-        const temperamentPet = pet.temperament || [];
-        const commonTemps = temperamentPrefs.filter(t => temperamentPet.includes(t));
-        const T = temperamentPrefs.length === 0 ? 10 : (commonTemps.length / temperamentPrefs.length) * 10;
+      const temperamentPrefs = preferences.temperament || [];
+      const temperamentPet = pet.temperament || [];
+      const commonTemps = temperamentPrefs.filter((t) =>
+        temperamentPet.includes(t)
+      );
+      const T =
+        temperamentPrefs.length === 0
+          ? 10
+          : (commonTemps.length / temperamentPrefs.length) * 10;
 
-        const H = preferences.housing_type &&
-          pet.space_requirements &&
-          pet.space_requirements.toLowerCase().includes(preferences.housing_type.toLowerCase()) ? 5 : 0;
+      const H =
+        preferences.housing_type &&
+        pet.space_requirements &&
+        pet.space_requirements
+          .toLowerCase()
+          .includes(preferences.housing_type.toLowerCase())
+          ? 5
+          : 0;
 
-        const score = S + Z + A + G + L + T + H;
+      const score = S + Z + A + G + L + T + H;
 
-        const reasons = [];
-        if (S) reasons.push(`Species matches (${pet.species})`);
-        if (Z) reasons.push(`Size matches (${pet.size})`);
-        if (A > 0) reasons.push(`Age fits your preferred range (${preferences.age_range[0]}-${preferences.age_range[1]})`);
-        if (G) reasons.push(`Gender matches (${pet.gender})`);
-        if (L) reasons.push(`Activity level matches (${pet.activity_level})`);
-        if (T > 0) reasons.push(`Temperament matches (${commonTemps.join(', ')})`);
-        if (H) reasons.push(`Housing compatible (${preferences.housing_type})`);
-        if (distance <= maxDistance) reasons.push(`Located within ${maxDistance} miles (${distance.toFixed(1)} mi away)`);
+      const reasons = [];
+      if (S) reasons.push(`Species matches (${pet.species})`);
+      if (Z) reasons.push(`Size matches (${pet.size})`);
+      if (A > 0)
+        reasons.push(
+          `Age fits your preferred range (${preferences.age_range[0]}–${preferences.age_range[1]})`
+        );
+      if (G) reasons.push(`Gender matches (${pet.gender})`);
+      if (L) reasons.push(`Activity level matches (${pet.activity_level})`);
+      if (T > 0)
+        reasons.push(`Temperament matches (${commonTemps.join(", ")})`);
+      if (H) reasons.push(`Housing compatible (${preferences.housing_type})`);
+      reasons.push(
+        `Located within ${maxDistance} miles (${distance.toFixed(1)} mi)`
+      );
 
-        return {
-          pet,
-          score: Math.round(score * 100) / 100,
-          distance,
-          matchReasons: reasons,
-        };
-      })
-      .filter(Boolean);
+      const recommendation = {
+        pet,
+        score: Math.round(score * 100) / 100,
+        distance,
+        matchReasons: reasons,
+      };
 
-    // Sort recommendations
-    recommendations.sort((a, b) => {
-      if (b.score === a.score) return a.distance - b.distance;
-      return b.score - a.score;
-    });
+      // Step 7: Group pets by district match
+      if (petDistrict && petDistrict === userDistrict) {
+        sameDistrict.push(recommendation);
+      } else {
+        otherDistrict.push(recommendation);
+      }
+    }
+
+    // Step 8: Sort each group by distance first, then score
+    sameDistrict.sort((a, b) => a.distance - b.distance || b.score - a.score);
+    otherDistrict.sort((a, b) => a.distance - b.distance || b.score - a.score);
+
+    // Step 9: Combine both groups (same-district pets first)
+    const recommendations = [...sameDistrict, ...otherDistrict];
 
     return NextResponse.json({ success: true, recommendations });
   } catch (error) {
-    console.error('Recommendation API error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    console.error("Recommendation API error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

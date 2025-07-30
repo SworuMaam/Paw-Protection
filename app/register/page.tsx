@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, PawPrint, Eye, EyeOff, MapPin, Home } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@/types";
+import { normalizeDistrictFromAddress } from "@/lib/data/normalizeDistrictFromAddress";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -124,14 +125,12 @@ export default function RegisterPage() {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
-        console.log("Detected coordinates:", latitude, longitude); // Debug
-
         try {
           const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en&countrycodes=NP`;
 
           const response = await fetch(url, {
             headers: {
-              "User-Agent": "PetAdoptApp/1.0 (your.email@example.com)", // <-- Use real email
+              "User-Agent": "PetAdoptApp/1.0 (your.email@example.com)",
             },
           });
 
@@ -140,15 +139,13 @@ export default function RegisterPage() {
           }
 
           const data = await response.json();
-          const displayName = data?.display_name;
-
-          if (!displayName) {
-            throw new Error("No address found in response");
-          }
+          const displayName = data?.display_name || "";
+          const district = normalizeDistrictFromAddress(displayName);
 
           setFormData((prev) => ({
             ...prev,
             location: displayName,
+            district,
           }));
 
           toast.success("Detected your current location");
@@ -169,7 +166,7 @@ export default function RegisterPage() {
         setIsGettingLocation(false);
       },
       {
-        enableHighAccuracy: true, // Ask for GPS-level accuracy
+        enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0,
       }

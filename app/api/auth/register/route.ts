@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         address: geoLocation.address,
         latitude: geoLocation.latitude,
         longitude: geoLocation.longitude,
+        district: geoLocation.district,
       };
     }
 
