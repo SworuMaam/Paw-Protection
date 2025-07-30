@@ -7,12 +7,25 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Menu, User, Settings, LogOut, Shield, Home,
-  Search, Star, Info, Mail, PawPrint, Edit
+  Menu,
+  User,
+  Settings,
+  LogOut,
+  Shield,
+  Home,
+  Search,
+  Star,
+  Info,
+  Mail,
+  PawPrint,
+  Edit,
 } from "lucide-react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -114,7 +127,10 @@ export function Navigation() {
                   ))}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">
                           {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -133,11 +149,21 @@ export function Navigation() {
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center">
+                      <Link
+                        href={
+                          user?.role === "admin"
+                            ? "/admin"
+                            : user?.role === "foster-user"
+                            ? "/foster-dashboard"
+                            : "/dashboard"
+                        }
+                        className="flex items-center"
+                      >
                         <User className="mr-2 h-4 w-4" />
                         Profile
                       </Link>
                     </DropdownMenuItem>
+
                     {isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link href="/admin" className="flex items-center">
@@ -147,7 +173,10 @@ export function Navigation() {
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-600"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
                     </DropdownMenuItem>
@@ -248,7 +277,11 @@ export function Navigation() {
                   </div>
                 ) : (
                   <div className="border-t pt-4 space-y-2">
-                    <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start"
+                      asChild
+                    >
                       <Link href="/login" onClick={() => setIsOpen(false)}>
                         Login
                       </Link>

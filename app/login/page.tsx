@@ -1,67 +1,68 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, PawPrint, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, PawPrint, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  
+
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const result = await login(formData.email, formData.password);
-      
+
       if (result.success) {
-        toast.success('Welcome back!');
+        toast.success("Welcome back!");
 
-
-        // The login function has already updated the AuthContext state.
-        // We can now navigate to the correct dashboard.
-        let redirectUrl = '/dashboard'; // Default to user dashboard
-        if (result?.user?.role === 'admin') {
-          redirectUrl = '/admin';
-        } else if (result?.user?.role === 'foster-user') {
-          redirectUrl = '/foster-dashboard'; // New dashboard for foster users
+        let redirectUrl = "/"; // Default for user and foster-user
+        if (result?.user?.role === "admin") {
+          redirectUrl = "/admin";
         }
 
         router.push(redirectUrl);
       } else {
-        setError(result.error || 'Login failed');
+        setError(result.error || "Login failed");
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
-    setError('');
+    setError("");
   };
 
   return (
@@ -73,7 +74,9 @@ export default function LoginPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
               <PawPrint className="h-7 w-7 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold gradient-text">Paw Protection</span>
+            <span className="text-2xl font-bold gradient-text">
+              Paw Protection
+            </span>
           </Link>
         </div>
 
@@ -84,7 +87,7 @@ export default function LoginPage() {
               Sign in to your account to continue your pet adoption journey
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
@@ -92,7 +95,7 @@ export default function LoginPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -106,14 +109,14 @@ export default function LoginPage() {
                   className="transition-all focus:ring-2 focus:ring-primary/20"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
@@ -135,7 +138,7 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -143,11 +146,11 @@ export default function LoginPage() {
                     Signing In...
                   </>
                 ) : (
-                  'Sign In'
+                  "Sign In"
                 )}
               </Button>
             </form>
-            
+
             <div className="mt-6 text-center space-y-4">
               {/* <Link 
                 href="/forgot-password" 
@@ -155,10 +158,13 @@ export default function LoginPage() {
               >
                 Forgot your password?
               </Link> */}
-              
+
               <div className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link href="/register" className="text-primary hover:underline font-medium">
+                Don't have an account?{" "}
+                <Link
+                  href="/register"
+                  className="text-primary hover:underline font-medium"
+                >
                   Sign up
                 </Link>
               </div>

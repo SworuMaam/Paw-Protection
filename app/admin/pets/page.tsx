@@ -10,24 +10,14 @@ import { Label } from "@/components/ui/label";
 
 const speciesOptions = ["Dog", "Cat"];
 const breedOptions: Record<string, string[]> = {
-  Dog: ["Labrador", "Beagle", "Poodle", "Bulldog", "Golden Retriever","German Shepherd"],
+  Dog: ["Labrador", "Beagle", "Poodle", "Bulldog", "Golden Retriever", "German Shepherd"],
   Cat: ["Persian", "Siamese", "Maine Coon", "Bengal", "Ragdoll"],
 };
 const sizeOptions = ["Small", "Medium", "Large", "Extra Large"];
 const genderOptions = ["Male", "Female"];
-const temperamentOptions = [
-  "Friendly",
-  "Energetic",
-  "Calm",
-  "Playful",
-  "Loyal",
-];
+const temperamentOptions = ["Friendly", "Energetic", "Calm", "Playful", "Loyal"];
 const activityLevelOptions = ["Low", "Moderate", "High", "Very High"];
-const spaceRequirementOptions = [
-  "Small apartment",
-  "House with yard",
-  "Farm",
-];
+const spaceRequirementOptions = ["Small apartment", "House with yard", "Farm"];
 const availabilityOptions = [
   "Available",
   "Pending",
@@ -59,25 +49,19 @@ export default function AddPetPage() {
     availability_status: "Available",
   });
 
-  // Update availability_status automatically based on foster_parent_id
+  const [customSpecies, setCustomSpecies] = useState("");
+  const [customBreed, setCustomBreed] = useState("");
+
   useEffect(() => {
-    if (formData.foster_parent_id && formData.foster_parent_id.trim() !== "") {
-      setFormData((prev) => ({
-        ...prev,
-        availability_status: "Fostered_Not_Available",
-      }));
+    if (formData.foster_parent_id.trim()) {
+      setFormData((prev) => ({ ...prev, availability_status: "Fostered_Not_Available" }));
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        availability_status: "Available",
-      }));
+      setFormData((prev) => ({ ...prev, availability_status: "Available" }));
     }
   }, [formData.foster_parent_id]);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -91,12 +75,18 @@ export default function AddPetPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const finalSpecies = formData.species === "Other" ? customSpecies.trim() : formData.species;
+    const finalBreed = formData.breed === "Other" ? customBreed.trim() : formData.breed;
+
     const form = new FormData();
 
     Object.entries(formData).forEach(([key, value]) => {
       if (key === "imageFile" || key === "temperament") return;
       if (value !== "") form.append(key, value as string);
     });
+
+    form.set("species", finalSpecies);
+    form.set("breed", finalBreed);
 
     formData.temperament.forEach((t) => form.append("temperament", t));
     if (formData.imageFile) form.append("image", formData.imageFile);
@@ -115,7 +105,7 @@ export default function AddPetPage() {
       } else {
         toast.error(result.error || "Failed to add pet");
       }
-    } catch (error) {
+    } catch {
       toast.error("Unexpected error occurred");
     }
   };
@@ -130,12 +120,7 @@ export default function AddPetPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label>Name</Label>
-          <Input
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+          <Input name="name" value={formData.name} onChange={handleChange} required />
         </div>
 
         <div>
@@ -143,7 +128,10 @@ export default function AddPetPage() {
           <select
             name="species"
             value={formData.species}
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              if (e.target.value !== "Other") setCustomSpecies("");
+            }}
             className="w-full border rounded p-2"
             required
           >
@@ -153,7 +141,17 @@ export default function AddPetPage() {
                 {s}
               </option>
             ))}
+            <option value="Other">Other</option>
           </select>
+          {formData.species === "Other" && (
+            <Input
+              placeholder="Enter custom species"
+              value={customSpecies}
+              onChange={(e) => setCustomSpecies(e.target.value)}
+              className="mt-2"
+              required
+            />
+          )}
         </div>
 
         <div>
@@ -161,7 +159,10 @@ export default function AddPetPage() {
           <select
             name="breed"
             value={formData.breed}
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              if (e.target.value !== "Other") setCustomBreed("");
+            }}
             className="w-full border rounded p-2"
             required
           >
@@ -171,18 +172,22 @@ export default function AddPetPage() {
                 {b}
               </option>
             ))}
+            <option value="Other">Other</option>
           </select>
+          {formData.breed === "Other" && (
+            <Input
+              placeholder="Enter custom breed"
+              value={customBreed}
+              onChange={(e) => setCustomBreed(e.target.value)}
+              className="mt-2"
+              required
+            />
+          )}
         </div>
 
         <div>
           <Label>Age</Label>
-          <Input
-            type="number"
-            name="age"
-            value={formData.age}
-            onChange={handleChange}
-            required
-          />
+          <Input type="number" name="age" value={formData.age} onChange={handleChange} required />
         </div>
 
         <div>
@@ -245,9 +250,7 @@ export default function AddPetPage() {
             multiple
             value={formData.temperament}
             onChange={(e) => {
-              const selected = Array.from(e.target.selectedOptions).map(
-                (opt) => opt.value
-              );
+              const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
               setFormData((prev) => ({ ...prev, temperament: selected }));
             }}
             className="w-full border rounded p-2 h-28"
@@ -275,12 +278,7 @@ export default function AddPetPage() {
 
       <div>
         <Label>Image Upload (File only)</Label>
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          required
-        />
+        <Input type="file" accept="image/*" onChange={handleFileChange} required />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -295,12 +293,7 @@ export default function AddPetPage() {
         </div>
         <div>
           <Label>Diet Type</Label>
-          <Input
-            name="diet_type"
-            value={formData.diet_type}
-            onChange={handleChange}
-            required
-          />
+          <Input name="diet_type" value={formData.diet_type} onChange={handleChange} required />
         </div>
         <div>
           <Label>Diet Frequency</Label>
@@ -347,9 +340,7 @@ export default function AddPetPage() {
             onChange={handleChange}
             placeholder="Enter foster user ID"
           />
-          <p className="text-xs text-muted-foreground">
-            Leave blank if not assigning
-          </p>
+          <p className="text-xs text-muted-foreground">Leave blank if not assigning</p>
         </div>
         <div>
           <Label>Availability Status</Label>
