@@ -10,6 +10,14 @@ const availabilityOptions = [
   "Fostered_Not_Available",
 ];
 
+// Default fallback JSON location if nothing is provided
+const defaultLocation = {
+  address: "काठमाडौँ महानगरपालिका, काठमाडौं, बागमती प्रदेश, नेपाल",
+  district: "kathmandu",
+  latitude: 27.708317,
+  longitude: 85.3205817,
+};
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -34,6 +42,7 @@ export async function POST(req: Request) {
     const fosterIdRaw = formData.get("foster_parent_id") as string;
     let foster_parent_id: number | null = null;
     let location_address = "";
+    let location_used = false;
 
     if (fosterIdRaw && fosterIdRaw.trim() !== "") {
       const fosterId = parseInt(fosterIdRaw);
@@ -60,22 +69,16 @@ export async function POST(req: Request) {
 
       foster_parent_id = fosterId;
 
-      // Use foster parent's full location object
       const fosterLocation = fosterCheck.rows[0].location;
-      location_address =
-        typeof fosterLocation === "string"
-          ? fosterLocation
-          : JSON.stringify(fosterLocation);
+      if (fosterLocation && typeof fosterLocation === "object") {
+        location_address = JSON.stringify(fosterLocation);
+        location_used = true;
+      }
     }
 
-    // If no location provided and no foster, default to Kathmandu
-    if (!location_address || location_address.trim() === "") {
-      location_address = JSON.stringify({
-        address: "Kathmandu, Nepal",
-        latitude: 27.7172,
-        longitude: 85.3240,
-        district: "kathmandu",
-      });
+    // If no foster and no location provided, store default location
+    if (!location_used) {
+      location_address = JSON.stringify(defaultLocation);
     }
 
     let availability_status = formData.get("availability_status") as string;
@@ -85,7 +88,7 @@ export async function POST(req: Request) {
         : "Available";
     }
 
-    // Image upload
+    // Handle image upload
     let imageUrl = "";
     const imageField = formData.get("image");
     if (imageField instanceof File) {
@@ -135,7 +138,7 @@ export async function POST(req: Request) {
         activity_level,
         description,
         imageUrl,
-        location_address, // Now a full JSON string
+        location_address,
         diet_type,
         diet_frequency,
         space_requirements,
