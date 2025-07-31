@@ -9,19 +9,21 @@ import { Heart, MapPin, Calendar, User, Trash, Pencil } from "lucide-react";
 import { Pet } from "@/types/pet";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PetCardProps {
-  pet: Pet;
+  pet: Pet & { isFavorited?: boolean };
   showFavorite?: boolean;
 }
 
 export function PetCard({ pet, showFavorite = false }: PetCardProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(pet.isFavorited ?? false);
   const [imageError, setImageError] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const { user } = useAuth();
   const isAdminEditPage = pathname === "/admin/edit-pets";
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -39,12 +41,45 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
       if (!res.ok) throw new Error("Failed to delete pet");
 
       toast.success("Pet deleted");
-      router.refresh(); // Refresh current page to remove deleted card
+      router.refresh();
     } catch (err) {
       toast.error("Error deleting pet");
       console.error(err);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.error("Please log in to save favorites");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/favorites", {
+        method: isFavorited ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ petId: pet.id }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to update favorite");
+      }
+
+      setIsFavorited(!isFavorited);
+      toast.success(
+        isFavorited ? "Removed from favorites" : "Added to favorites"
+      );
+    } catch (err) {
+      toast.error("Could not update favorite");
+      console.error(err);
     }
   };
 
@@ -84,9 +119,29 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 size="sm"
                 variant="secondary"
                 className="absolute top-3 right-3 h-8 w-8 p-0 rounded-full shadow-md"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
-                  setIsFavorited((prev) => !prev);
+
+                  try {
+                    const res = await fetch("/api/favorites", {
+                      method: isFavorited ? "DELETE" : "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ petId: pet.id }),
+                      credentials: "include",
+                    });
+
+                    if (!res.ok) throw new Error("Failed to update favorites");
+
+                    toast.success(
+                      isFavorited
+                        ? "Removed from favorites"
+                        : "Added to favorites"
+                    );
+                    setIsFavorited((prev) => !prev);
+                  } catch (err) {
+                    console.error(err);
+                    toast.error("Unable to update favorites");
+                  }
                 }}
               >
                 <Heart

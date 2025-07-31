@@ -102,4 +102,17 @@ CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id)
 CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
 CREATE INDEX IF NOT EXISTS idx_pets_temperament ON pets USING GIN (temperament);
 
+ALTER TABLE users
+  ALTER COLUMN location TYPE JSONB USING location::JSONB;
 
+ALTER TABLE user_preferences
+  DROP COLUMN IF EXISTS breeds,
+  DROP COLUMN IF EXISTS special_needs,
+  DROP COLUMN IF EXISTS location,
+  DROP COLUMN IF EXISTS max_distance;
+  
+  ALTER TABLE adoption_applications
+ADD COLUMN accepted_at TIMESTAMP WITH TIME ZONE;
+
+ALTER TABLE adoption_applications
+RENAME COLUMN accepted_at TO action_performed_at;
