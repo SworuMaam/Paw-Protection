@@ -26,14 +26,14 @@ export async function POST(req: Request) {
     const temperament = getArray("temperament");
     const activity_level = formData.get("activity_level") as string;
     const description = formData.get("description") as string;
-    let location_address = formData.get("location_address") as string;
     const diet_type = formData.get("diet_type") as string;
     const diet_frequency = formData.get("diet_frequency") as string;
     const space_requirements = formData.get("space_requirements") as string;
-    const adoption_fee = parseFloat(formData.get("adoption_fee") as string);
+    const adoption_fee = parseInt(formData.get("adoption_fee") as string);
 
     const fosterIdRaw = formData.get("foster_parent_id") as string;
     let foster_parent_id: number | null = null;
+    let location_address = "";
 
     if (fosterIdRaw && fosterIdRaw.trim() !== "") {
       const fosterId = parseInt(fosterIdRaw);
@@ -60,39 +60,34 @@ export async function POST(req: Request) {
 
       foster_parent_id = fosterId;
 
-      // Override location_address with foster parent's location if available
+      // Use foster parent's full location object
       const fosterLocation = fosterCheck.rows[0].location;
-      if (
-        fosterLocation &&
-        typeof fosterLocation.address === "string" &&
-        fosterLocation.address.trim() !== ""
-      ) {
-        location_address = fosterLocation.address;
-      }
+      location_address =
+        typeof fosterLocation === "string"
+          ? fosterLocation
+          : JSON.stringify(fosterLocation);
     }
 
-    // If no location provided and no foster parent assigned, default to Kathmandu, Nepal
-    if (
-      (!location_address || location_address.trim() === "") &&
-      !foster_parent_id
-    ) {
-      location_address = "Kathmandu, Nepal";
+    // If no location provided and no foster, default to Kathmandu
+    if (!location_address || location_address.trim() === "") {
+      location_address = JSON.stringify({
+        address: "Kathmandu, Nepal",
+        latitude: 27.7172,
+        longitude: 85.3240,
+        district: "kathmandu",
+      });
     }
 
-    // Handle availability_status with fallback defaults
     let availability_status = formData.get("availability_status") as string;
-    if (
-      !availability_status ||
-      !availabilityOptions.includes(availability_status)
-    ) {
+    if (!availabilityOptions.includes(availability_status)) {
       availability_status = foster_parent_id
         ? "Fostered_Not_Available"
         : "Available";
     }
 
+    // Image upload
     let imageUrl = "";
     const imageField = formData.get("image");
-
     if (imageField instanceof File) {
       const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
       if (!allowedTypes.includes(imageField.type)) {
@@ -140,7 +135,7 @@ export async function POST(req: Request) {
         activity_level,
         description,
         imageUrl,
-        location_address,
+        location_address, // Now a full JSON string
         diet_type,
         diet_frequency,
         space_requirements,

@@ -148,8 +148,38 @@ export default function PreferencesPage() {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
+    // Check if all required fields are filled
+    const {
+      species,
+      size,
+      ageRange,
+      gender,
+      temperament,
+      activityLevel,
+      housingType,
+      yardSize,
+      experienceLevel,
+      timeAvailable,
+    } = preferences;
 
+    if (
+      species.length === 0 ||
+      size.length === 0 ||
+      ageRange[0] === undefined ||
+      ageRange[1] === undefined ||
+      gender.length === 0 ||
+      temperament.length === 0 ||
+      activityLevel.length === 0 ||
+      !housingType ||
+      !yardSize ||
+      !experienceLevel ||
+      !timeAvailable
+    ) {
+      toast.error("Please fill out all fields before saving your preferences.");
+      return;
+    }
+
+    setIsSaving(true);
     try {
       const response = await fetch("/api/preferences", {
         method: "POST",
@@ -159,7 +189,6 @@ export default function PreferencesPage() {
         credentials: "include",
         body: JSON.stringify(preferences),
       });
-
       if (response.ok) {
         setHasUnsavedChanges(false);
         toast.success("Preferences saved successfully!");
