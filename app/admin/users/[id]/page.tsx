@@ -49,7 +49,8 @@ export default function UserProfile() {
   const getLocationText = () => {
     if (!user.location) return "Not provided";
     if (typeof user.location === "string") return user.location;
-    if (typeof user.location === "object" && user.location.address) return user.location.address;
+    if (typeof user.location === "object" && user.location.address)
+      return user.location.address;
     return "Invalid location format";
   };
 
@@ -71,8 +72,7 @@ export default function UserProfile() {
             <Badge variant="outline">{user.role}</Badge>
           </div>
           <div>
-            <span className="font-semibold">Location:</span>{" "}
-            {getLocationText()}
+            <span className="font-semibold">Location:</span> {getLocationText()}
           </div>
           <div>
             <span className="font-semibold">Contact Number:</span>{" "}
@@ -87,6 +87,26 @@ export default function UserProfile() {
               <span className="font-semibold">Foster Capacity:</span>{" "}
               {user.foster_capacity ?? "Not specified"}
             </div>
+          )}
+          {user.role === "user" && (
+            <>
+              <div>
+                <span className="font-semibold">Housing Type:</span>{" "}
+                {user.housing_type || "Not specified"}
+              </div>
+              <div>
+                <span className="font-semibold">Yard Size:</span>{" "}
+                {user.yard_size || "Not specified"}
+              </div>
+              <div>
+                <span className="font-semibold">Experience Level:</span>{" "}
+                {user.experience_level || "Not specified"}
+              </div>
+              <div>
+                <span className="font-semibold">Time Available:</span>{" "}
+                {user.time_available || "Not specified"}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

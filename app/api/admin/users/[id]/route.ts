@@ -9,13 +9,19 @@ export const GET = withAuth(
     try {
       const userQuery = await db.query(
         `SELECT id, name, email, role, location, contact_number, foster_capacity, created_at
-       FROM users WHERE id = $1`,
+         FROM users WHERE id = $1`,
         [userId]
       );
 
       const adoptedCountQuery = await db.query(
         `SELECT COUNT(*) FROM adoption_applications 
-       WHERE user_id = $1 AND status = 'Approved'`,
+         WHERE user_id = $1 AND status = 'Accepted'`, // fixed to match your logic
+        [userId]
+      );
+
+      const preferenceQuery = await db.query(
+        `SELECT housing_type, yard_size, experience_level, time_available
+         FROM user_preferences WHERE user_id = $1`,
         [userId]
       );
 
@@ -25,8 +31,9 @@ export const GET = withAuth(
 
       const user = userQuery.rows[0];
       const adoptedPetsCount = parseInt(adoptedCountQuery.rows[0].count);
+      const preferences = preferenceQuery.rows[0] || {};
 
-      return NextResponse.json({ ...user, adoptedPetsCount });
+      return NextResponse.json({ ...user, adoptedPetsCount, ...preferences });
     } catch (err) {
       console.error("Error fetching user profile:", err);
       return new NextResponse("Internal server error", { status: 500 });
