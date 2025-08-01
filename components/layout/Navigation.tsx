@@ -57,8 +57,8 @@ export function Navigation() {
   let homeLink = "/";
   if (isAuthenticated && user?.role) {
     if (user.role === "admin") homeLink = "/admin";
-    else if (user.role === "foster-user") homeLink = "/foster-dashboard";
-    else homeLink = "/dashboard";
+    else if (user.role === "foster-user") homeLink = "/";
+    else homeLink = "/";
   }
 
   const navigationItems = isAdmin ? adminNavItems : defaultNavItems;

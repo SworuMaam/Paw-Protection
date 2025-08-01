@@ -7,7 +7,7 @@ export interface AuthenticatedRequest extends NextRequest {
 
 export function withAuth(
   handler: (req: AuthenticatedRequest, context: any) => Promise<NextResponse>,
-  options: { requiredRole?: 'admin' | 'user' } = {}
+  options: { requiredRole?: 'admin' | 'user' | 'foster-user' } = {}
 ) {
   return async (req: AuthenticatedRequest, context: any) => { // Make this wrapper function async
     try {

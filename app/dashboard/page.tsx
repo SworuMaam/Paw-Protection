@@ -1,22 +1,28 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Heart, 
-  Search, 
-  Star, 
-  Settings, 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Heart,
+  Search,
+  Star,
+  Settings,
   PawPrint,
   MapPin,
   Calendar,
-  User as UserIcon
-} from 'lucide-react';
-import Link from 'next/link';
+  User as UserIcon,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function UserDashboard() {
   const { user, isLoading, isUser } = useAuth();
@@ -36,46 +42,46 @@ export default function UserDashboard() {
 
   const quickStats = [
     {
-      title: 'Saved Pets',
-      value: '12',
+      title: "Saved Pets",
+      value: "12",
       icon: Heart,
-      color: 'text-red-500'
+      color: "text-red-500",
     },
     {
-      title: 'Recommendations',
-      value: '8',
+      title: "Recommendations",
+      value: "8",
       icon: Star,
-      color: 'text-yellow-500'
+      color: "text-yellow-500",
     },
     {
-      title: 'Applications',
-      value: '3',
+      title: "Applications",
+      value: "3",
       icon: PawPrint,
-      color: 'text-blue-500'
-    }
+      color: "text-blue-500",
+    },
   ];
 
   const recentActivity = [
     {
-      action: 'Saved Luna to favorites',
-      time: '2 hours ago',
-      type: 'save'
+      action: "Saved Luna to favorites",
+      time: "2 hours ago",
+      type: "save",
     },
     {
-      action: 'Updated preferences',
-      time: '1 day ago',
-      type: 'update'
+      action: "Updated preferences",
+      time: "1 day ago",
+      type: "update",
     },
     {
-      action: 'Viewed Buddy\'s profile',
-      time: '2 days ago',
-      type: 'view'
+      action: "Viewed Buddy's profile",
+      time: "2 days ago",
+      type: "view",
     },
     {
-      action: 'Applied to adopt Whiskers',
-      time: '3 days ago',
-      type: 'application'
-    }
+      action: "Applied to adopt Whiskers",
+      time: "3 days ago",
+      type: "application",
+    },
   ];
 
   return (
@@ -93,7 +99,10 @@ export default function UserDashboard() {
                 Continue your journey to find the perfect pet companion.
               </p>
             </div>
-            <Badge variant="secondary" className="bg-secondary/10 text-secondary">
+            <Badge
+              variant="secondary"
+              className="bg-secondary/10 text-secondary"
+            >
               Pet Lover
             </Badge>
           </div>
@@ -113,7 +122,9 @@ export default function UserDashboard() {
                   {user.location && (
                     <div className="flex items-center gap-1 mt-1">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{user.location.address}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {user.location.address}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -155,30 +166,43 @@ export default function UserDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Find your perfect pet companion
-              </CardDescription>
+              <CardDescription>Find your perfect pet companion</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button className="w-full justify-start" size="lg" asChild>
-                <Link href="/recommendations">
+                <Link href="/adopted-pets">
                   <Star className="mr-2 h-4 w-4" />
-                  View My Recommendations
+                  My adopted pets
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg" asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
+                asChild
+              >
                 <Link href="/pets">
                   <Search className="mr-2 h-4 w-4" />
-                  Browse All Pets
+                  Application Status
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg" asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
+                asChild
+              >
                 <Link href="/preferences">
                   <Settings className="mr-2 h-4 w-4" />
                   Update Preferences
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg" asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
+                asChild
+              >
                 <Link href="/favorites">
                   <Heart className="mr-2 h-4 w-4" />
                   My Saved Pets
@@ -191,23 +215,28 @@ export default function UserDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Your latest interactions
-              </CardDescription>
+              <CardDescription>Your latest interactions</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-center space-x-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.type === 'save' ? 'bg-red-500' :
-                      activity.type === 'update' ? 'bg-blue-500' :
-                      activity.type === 'view' ? 'bg-green-500' :
-                      'bg-purple-500'
-                    }`}></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        activity.type === "save"
+                          ? "bg-red-500"
+                          : activity.type === "update"
+                          ? "bg-blue-500"
+                          : activity.type === "view"
+                          ? "bg-green-500"
+                          : "bg-purple-500"
+                      }`}
+                    ></div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.time}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -215,41 +244,6 @@ export default function UserDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Recommendations Preview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
-              Your Pet Recommendations
-            </CardTitle>
-            <CardDescription>
-              Based on your preferences and location
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              {/* Mock recommendation cards */}
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center">
-                    <PawPrint className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h4 className="font-semibold mb-1">Pet Name {i}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">Breed • Age</p>
-                  <Badge variant="outline" className="text-xs">
-                    95% Match
-                  </Badge>
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/recommendations">
-                View All Recommendations
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
