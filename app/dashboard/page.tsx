@@ -181,7 +181,7 @@ export default function UserDashboard() {
                 size="lg"
                 asChild
               >
-                <Link href="/pets">
+                <Link href="/user/adoption-status">
                   <Search className="mr-2 h-4 w-4" />
                   Application Status
                 </Link>
