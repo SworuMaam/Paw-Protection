@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { PetCard } from '@/components/pets/PetCard';
-import { Pet } from '@/types/pet';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PetCard } from "@/components/pets/PetCard";
+import { Pet } from "@/types/pet";
 
 export default function FavoritePetsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -12,12 +12,24 @@ export default function FavoritePetsPage() {
   useEffect(() => {
     async function fetchFavorites() {
       try {
-        const res = await fetch('/api/favorites/list');
+        const res = await fetch("/api/favorites/list", {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
         const data = await res.json();
-        setPets(data);
+
+        if (res.ok && data.success) {
+          setPets(data.pets);
+        } else {
+          console.error("Failed to load favorites:", data.error);
+          setPets([]);
+        }
       } catch (err) {
-        toast.error('Failed to load favorites');
-        console.error(err);
+        console.error("Error fetching favorites:", err);
+        setPets([]);
       } finally {
         setLoading(false);
       }
@@ -26,22 +38,28 @@ export default function FavoritePetsPage() {
     fetchFavorites();
   }, []);
 
-  if (loading) {
-    return <div className="text-center py-16">Loading your saved pets...</div>;
-  }
-
-  if (!pets.length) {
-    return <div className="text-center py-16">You haven’t saved any pets yet.</div>;
-  }
+  if (loading) return <div className="p-6">Loading favorite pets...</div>;
 
   return (
-    <div className="page-container py-8">
-      <h1 className="text-2xl font-bold mb-6">My Saved Pets</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {pets.map((pet) => (
-          <PetCard key={pet.id} pet={pet} showFavorite />
-        ))}
-      </div>
+    <div className="p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>My Favorite Pets</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {pets.length === 0 ? (
+            <p className="text-muted-foreground">
+              You haven’t saved any pets yet.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pets.map((pet) => (
+                <PetCard key={pet.id} pet={{ ...pet, isFavorited: true }} showFavorite />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

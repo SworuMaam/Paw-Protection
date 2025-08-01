@@ -66,6 +66,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ petId: pet.id }),
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -119,30 +120,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 size="sm"
                 variant="secondary"
                 className="absolute top-3 right-3 h-8 w-8 p-0 rounded-full shadow-md"
-                onClick={async (e) => {
-                  e.preventDefault();
-
-                  try {
-                    const res = await fetch("/api/favorites", {
-                      method: isFavorited ? "DELETE" : "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ petId: pet.id }),
-                      credentials: "include",
-                    });
-
-                    if (!res.ok) throw new Error("Failed to update favorites");
-
-                    toast.success(
-                      isFavorited
-                        ? "Removed from favorites"
-                        : "Added to favorites"
-                    );
-                    setIsFavorited((prev) => !prev);
-                  } catch (err) {
-                    console.error(err);
-                    toast.error("Unable to update favorites");
-                  }
-                }}
+                onClick={toggleFavorite}
               >
                 <Heart
                   className={`h-4 w-4 ${

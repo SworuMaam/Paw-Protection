@@ -12,7 +12,7 @@ export default function HomePage() {
       <HeroSection />
       <FeaturedPets />
       <HowItWorks />
-      <Statistics />
+      {/* <Statistics /> */}
       {/* <Testimonials /> */}
     </>
   );

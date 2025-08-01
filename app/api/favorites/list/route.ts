@@ -1,25 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
-import { getUserFromToken } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import db from '@/lib/db';
+import { withAuth, AuthenticatedRequest } from '@/lib/middleware-auth';
 
-export async function GET(req: NextRequest) {
-  try {
-    const user = await getUserFromToken(req);
+export const GET = withAuth(
+  async (req: AuthenticatedRequest) => {
+    const client = await db.connect();
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    try {
+      const userIdNum = Number(req.user?.userId);
+      if (!userIdNum) {
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      }
+
+      const result = await client.query(
+        `
+        SELECT 
+          p.id,
+          p.name,
+          p.species,
+          p.breed,
+          p.gender,
+          p.age,
+          p.size,
+          p.image,
+          p.location_address,
+          p.adoption_fee,
+          p.availability_status
+        FROM user_favorites uf
+        JOIN pets p ON uf.pet_id = p.id
+        WHERE uf.user_id = $1
+        `,
+        [userIdNum]
+      );
+
+      return NextResponse.json({ success: true, pets: result.rows });
+    } catch (error) {
+      console.error('[Favorites] Error:', error);
+      return NextResponse.json({ success: false, error: 'Failed to fetch favorites' }, { status: 500 });
+    } finally {
+      client.release();
     }
-
-    const result = await pool.query(
-      `SELECT p.* FROM pets p
-       JOIN user_favorites uf ON p.id = uf.pet_id
-       WHERE uf.user_id = $1`,
-      [user.id]
-    );
-
-    return NextResponse.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Failed to fetch favorites' }, { status: 500 });
-  }
-}
+  },
+  { requiredRole: 'user' }
+);
