@@ -6,43 +6,63 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PawPrint } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdoptionRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<number | null>(null);
+
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch("/api/admin/adoption-request", {
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to load requests");
+      }
+
+      const data = await res.json();
+      setRequests(data.requests);
+    } catch (err) {
+      toast.error("Could not fetch adoption requests.");
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const res = await fetch("/api/admin/adoption-request", {
-          credentials: "include",
-        });
-        const data = await res.json();
-        setRequests(data.requests);
-      } catch (err) {
-        console.error("Failed to fetch requests", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRequests();
   }, []);
 
   const handleAction = async (id: number, action: "Accepted" | "Rejected") => {
-    const res = await fetch("/api/admin/adoption-request", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ requestId: id, status: action }),
-    });
+    setProcessingId(id);
 
-    if (res.ok) {
-      const updated = await fetch("/api/admin/adoption-request", {
+    try {
+      const res = await fetch("/api/admin/adoption-request", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ requestId: id, status: action }),
       });
-      const updatedData = await updated.json();
-      setRequests(updatedData.requests);
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        toast.error(`Failed to ${action.toLowerCase()} request.`);
+        console.error("API error:", result);
+        return;
+      }
+
+      toast.success(`Request ${action.toLowerCase()} successfully!`);
+      fetchRequests(); // Refresh data
+    } catch (error) {
+      console.error("Network error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -116,7 +136,8 @@ export default function AdoptionRequestsPage() {
                       {new Date(r.created_at).toLocaleDateString()}
                     </td>
                     <td className="p-2">
-                      {["Accepted", "Rejected"].includes(r.status) && r.action_performed_at
+                      {["Accepted", "Rejected"].includes(r.status) &&
+                      r.action_performed_at
                         ? new Date(r.action_performed_at).toLocaleDateString()
                         : "-"}
                     </td>
@@ -125,16 +146,18 @@ export default function AdoptionRequestsPage() {
                         <>
                           <Button
                             size="sm"
+                            disabled={processingId === r.id}
                             onClick={() => handleAction(r.id, "Accepted")}
                           >
-                            Accept
+                            {processingId === r.id ? "Processing..." : "Accept"}
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
+                            disabled={processingId === r.id}
                             onClick={() => handleAction(r.id, "Rejected")}
                           >
-                            Reject
+                            {processingId === r.id ? "Processing..." : "Reject"}
                           </Button>
                         </>
                       )}
@@ -143,6 +166,7 @@ export default function AdoptionRequestsPage() {
                 ))}
               </tbody>
             </table>
+
             {requests.length === 0 && (
               <p className="text-center text-muted-foreground py-4">
                 No adoption requests found.

@@ -16,6 +16,7 @@ export interface Pet {
     address: string;
     coordinates: [number, number];
     suitability: string[];
+    district: string;
   };
   care: {
     diet: {

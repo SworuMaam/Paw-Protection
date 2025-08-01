@@ -10,7 +10,6 @@ const availabilityOptions = [
   "Fostered_Not_Available",
 ];
 
-// Default fallback JSON location if nothing is provided
 const defaultLocation = {
   address: "काठमाडौँ महानगरपालिका, काठमाडौं, बागमती प्रदेश, नेपाल",
   district: "kathmandu",
@@ -41,8 +40,7 @@ export async function POST(req: Request) {
 
     const fosterIdRaw = formData.get("foster_parent_id") as string;
     let foster_parent_id: number | null = null;
-    let location_address = "";
-    let location_used = false;
+    let location_address: any = null;
 
     if (fosterIdRaw && fosterIdRaw.trim() !== "") {
       const fosterId = parseInt(fosterIdRaw);
@@ -54,9 +52,10 @@ export async function POST(req: Request) {
       }
 
       const fosterCheck = await db.query(
-        `SELECT id, location FROM users WHERE id = $1 AND role = 'foster-user'`,
+        `SELECT id, location, foster_capacity FROM users WHERE id = $1 AND role = 'foster-user'`,
         [fosterId]
       );
+
       if (fosterCheck.rowCount === 0) {
         return NextResponse.json(
           {
@@ -67,18 +66,33 @@ export async function POST(req: Request) {
         );
       }
 
-      foster_parent_id = fosterId;
+      const foster = fosterCheck.rows[0];
+      const fosterCapacity = foster.foster_capacity ?? 0;
 
-      const fosterLocation = fosterCheck.rows[0].location;
-      if (fosterLocation && typeof fosterLocation === "object") {
-        location_address = JSON.stringify(fosterLocation);
-        location_used = true;
+      const petCountRes = await db.query(
+        `SELECT COUNT(*) FROM pets WHERE foster_parent_id = $1`,
+        [fosterId]
+      );
+
+      const currentPets = parseInt(petCountRes.rows[0].count);
+
+      if (currentPets >= fosterCapacity) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "This foster parent has reached their capacity and cannot foster another pet.",
+          },
+          { status: 400 }
+        );
       }
+
+      foster_parent_id = fosterId;
+      location_address = foster.location ?? defaultLocation;
     }
 
-    // If no foster and no location provided, store default location
-    if (!location_used) {
-      location_address = JSON.stringify(defaultLocation);
+    if (!location_address) {
+      location_address = defaultLocation;
     }
 
     let availability_status = formData.get("availability_status") as string;
@@ -88,7 +102,6 @@ export async function POST(req: Request) {
         : "Available";
     }
 
-    // Handle image upload
     let imageUrl = "";
     const imageField = formData.get("image");
     if (imageField instanceof File) {
@@ -108,6 +121,7 @@ export async function POST(req: Request) {
       const uploadRes = await cloudinary.uploader.upload(dataURI, {
         folder: "paw_protection_pets",
       });
+
       imageUrl = uploadRes.secure_url;
     } else {
       return NextResponse.json(

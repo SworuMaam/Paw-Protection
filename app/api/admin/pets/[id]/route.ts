@@ -30,6 +30,7 @@ export const GET = withAuth(
 );
 
 // PUT: Update pet information (admin only)
+// PUT: Update pet information (admin only)
 export const PUT = withAuth(
   async (req: NextRequest, { params }) => {
     const petId = params.id;
@@ -59,10 +60,9 @@ export const PUT = withAuth(
         .trim();
       let location_address = "";
 
-      // If foster parent is assigned, override location_address with their location
       if (foster_parent_id) {
         const fosterCheck = await db.query(
-          `SELECT location FROM users WHERE id = $1 AND role = 'foster-user'`,
+          `SELECT location, foster_capacity FROM users WHERE id = $1 AND role = 'foster-user'`,
           [foster_parent_id]
         );
 
@@ -73,22 +73,38 @@ export const PUT = withAuth(
           );
         }
 
-        const fosterLocation = fosterCheck.rows[0].location;
+        const foster = fosterCheck.rows[0];
+        const capacity = foster.foster_capacity ?? 0;
 
-        if (
-          fosterLocation &&
-          typeof fosterLocation === "object" &&
-          typeof fosterLocation.address === "string" &&
-          fosterLocation.address.trim() !== ""
-        ) {
-          location_address = JSON.stringify(fosterLocation);
+        const assignedPetsRes = await db.query(
+          `SELECT COUNT(*) FROM pets WHERE foster_parent_id = $1 AND id != $2`,
+          [foster_parent_id, petId]
+        );
+
+        const assignedCount = parseInt(assignedPetsRes.rows[0].count);
+
+        if (assignedCount >= capacity) {
+          return NextResponse.json(
+            {
+              error:
+                "This foster parent has reached their capacity and cannot foster another pet.",
+            },
+            { status: 400 }
+          );
         }
 
-        // Force availability to Fostered_Not_Available
+        if (
+          foster.location &&
+          typeof foster.location === "object" &&
+          typeof foster.location.address === "string" &&
+          foster.location.address.trim() !== ""
+        ) {
+          location_address = JSON.stringify(foster.location);
+        }
+
         availability_status = "Fostered_Not_Available";
       }
 
-      // If not fostered and no valid location provided, set default
       if (
         !location_address &&
         (!location_address_raw || location_address_raw === "")
@@ -101,11 +117,10 @@ export const PUT = withAuth(
         });
       }
 
-      // If not overridden and valid location_address provided, use it as is
       if (!location_address && location_address_raw) {
         try {
           const parsed = JSON.parse(location_address_raw);
-          if (parsed && parsed.address && parsed.latitude && parsed.longitude) {
+          if (parsed?.address && parsed?.latitude && parsed?.longitude) {
             location_address = JSON.stringify(parsed);
           }
         } catch {

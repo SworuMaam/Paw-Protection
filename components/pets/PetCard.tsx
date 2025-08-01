@@ -193,7 +193,7 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
-                  {pet.location?.address || "Unknown location"}
+                  {pet.location?.district || "Unknown location"}
                 </div>
               </div>
 
