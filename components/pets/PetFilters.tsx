@@ -14,7 +14,7 @@ interface PetFiltersProps {
 }
 
 const filterOptions = {
-  species: ['Dog', 'Cat', 'Bird', 'Rabbit', 'Other'],
+  species: ['Dog', 'Cat'],
   size: ['Small', 'Medium', 'Large', 'Extra Large'],
   gender: ['Male', 'Female'],
   temperament: ['Friendly', 'Energetic', 'Calm', 'Playful', 'Loyal', 'Independent', 'Gentle'],

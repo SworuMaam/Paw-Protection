@@ -1,23 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
-import { getUserFromToken } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import db from "@/lib/db";
+import { withAuth, AuthenticatedRequest } from "@/lib/middleware-auth";
 
-// Add pet to user's favorites
-export async function POST(req: NextRequest) {
+// POST: Add favorite
+export const POST = withAuth(async (req: AuthenticatedRequest) => {
   try {
     const { petId } = await req.json();
-    const user = await getUserFromToken(req);
+    const userId = Number(req.user?.userId);
 
-    if (!user) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Insert favorite; ON CONFLICT DO NOTHING prevents duplicates
-    await pool.query(
+    await db.query(
       `INSERT INTO user_favorites (user_id, pet_id)
        VALUES ($1, $2)
        ON CONFLICT (user_id, pet_id) DO NOTHING`,
-      [user.id, petId]
+      [userId, petId]
     );
 
     return NextResponse.json({ success: true });
@@ -28,21 +27,21 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { requiredRole: "user" });
 
-// Remove pet from user's favorites
-export async function DELETE(req: NextRequest) {
+// DELETE: Remove favorite
+export const DELETE = withAuth(async (req: AuthenticatedRequest) => {
   try {
     const { petId } = await req.json();
-    const user = await getUserFromToken(req);
+    const userId = Number(req.user?.userId);
 
-    if (!user) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await pool.query(
+    await db.query(
       `DELETE FROM user_favorites WHERE user_id = $1 AND pet_id = $2`,
-      [user.id, petId]
+      [userId, petId]
     );
 
     return NextResponse.json({ success: true });
@@ -53,33 +52,30 @@ export async function DELETE(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { requiredRole: "user" });
 
-// Get list of user's favorite pets with isFavorited flag
-export async function GET(req: NextRequest) {
+// GET: List all favorites (optional if using /favorite/list route)
+export const GET = withAuth(async (req: AuthenticatedRequest) => {
   try {
-    const user = await getUserFromToken(req);
-
-    if (!user) {
+    const userId = Number(req.user?.userId);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Select all columns from pets joined with user_favorites for the user
-    const result = await pool.query(
+    const result = await db.query(
       `SELECT p.* FROM pets p
        JOIN user_favorites uf ON p.id = uf.pet_id
        WHERE uf.user_id = $1
-       ORDER BY uf.created_at DESC`, // optional: newest favorites first
-      [user.id]
+       ORDER BY uf.created_at DESC`,
+      [userId]
     );
 
-    // Add isFavorited: true to each pet for UI usage
-    const petsWithFavoriteFlag = result.rows.map((pet) => ({
+    const pets = result.rows.map((pet) => ({
       ...pet,
       isFavorited: true,
     }));
 
-    return NextResponse.json(petsWithFavoriteFlag);
+    return NextResponse.json(pets);
   } catch (err) {
     console.error("Error fetching favorites:", err);
     return NextResponse.json(
@@ -87,4 +83,4 @@ export async function GET(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { requiredRole: "user" });
