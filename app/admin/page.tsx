@@ -216,7 +216,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
                 <Link href="/admin/foster-parents">View Reports</Link>
               </Button>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>

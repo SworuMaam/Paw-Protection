@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { PetCard } from "@/components/pets/PetCard";
-import { PetFilters } from "@/components/pets/PetFilters";
+import { Pet } from "@/types/pet";
+import { toast } from "sonner";
+import { Search, Filter, Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,8 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Grid, List } from "lucide-react";
-import { Pet } from "@/types/pet";
+import { PetFilters } from "@/components/pets/PetFilters";
 
 export default function PetsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -25,24 +26,44 @@ export default function PetsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    const fetchPets = async () => {
+    async function fetchData() {
       try {
-        const res = await fetch("/api/pets");
-        const data = await res.json();
-        if (res.ok) {
-          setPets(data.pets);
-          setFilteredPets(data.pets);
-        } else {
-          console.error("Failed to fetch pets:", data.error);
+        // Fetch pets and user favorites in parallel
+        const [petsRes, favsRes] = await Promise.all([
+          fetch("/api/pets"),
+          fetch("/api/favorites"),
+        ]);
+
+        if (!petsRes.ok) throw new Error("Failed to fetch pets");
+        if (!favsRes.ok && favsRes.status !== 401)
+          throw new Error("Failed to fetch favorites");
+
+        const petsData = await petsRes.json();
+        let favsData: Pet[] = [];
+        if (favsRes.ok) {
+          favsData = await favsRes.json();
         }
+
+        // Extract IDs of favorited pets
+        const favoriteIds = favsData.map((pet) => pet.id);
+
+        // Merge pets with isFavorited flag
+        const petsWithFavFlag = petsData.pets.map((pet: Pet) => ({
+          ...pet,
+          isFavorited: favoriteIds.includes(pet.id),
+        }));
+
+        setPets(petsWithFavFlag);
+        setFilteredPets(petsWithFavFlag);
       } catch (error) {
-        console.error("Error fetching pets:", error);
+        toast.error(String(error));
+        console.error(error);
       } finally {
         setIsLoading(false);
       }
-    };
+    }
 
-    fetchPets();
+    fetchData();
   }, []);
 
   useEffect(() => {

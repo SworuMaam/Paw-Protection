@@ -169,10 +169,10 @@ export function PetCard({ pet, showFavorite = false }: PetCardProps) {
                   <User className="h-4 w-4" />
                   {pet.gender}
                 </div>
-                <div className="flex items-center gap-1">
+                {/* <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   {pet.location?.district || "Unknown location"}
-                </div>
+                </div> */}
               </div>
 
               <div className="flex flex-wrap gap-1">

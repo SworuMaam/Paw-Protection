@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     const userLat = userLocation.latitude;
     const userLon = userLocation.longitude;
     const userDistrict = userLocation.district;
-    const maxDistance = 50;
+    const maxDistance = 20;
 
     // Get all available pets and their foster parent locations if any
     const petsResult = await pool.query(`
@@ -110,7 +110,11 @@ export async function GET(req: NextRequest) {
         ? 5
         : 0;
 
-      const score = S + Z + A + G + L + T + H;
+      const rawScore = S + Z + A + G + L + T + H;
+      const roundedScore = Math.round(rawScore * 100) / 100;
+
+      // Skip recommendations with score less than 40%
+      if (roundedScore < 40) continue;
 
       const reasons = [];
       if (S) reasons.push(`Species matches (${pet.species})`);
@@ -125,7 +129,7 @@ export async function GET(req: NextRequest) {
       const recommendation = {
         pet,
         distance,
-        score: Math.round(score * 100) / 100,
+        score: roundedScore,
         matchReasons: reasons,
       };
 

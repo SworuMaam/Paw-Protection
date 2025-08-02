@@ -7,7 +7,9 @@ export async function GET() {
       `SELECT id, name, species, breed, age, gender, size, temperament, 
               activity_level, description, image, location_address, 
               adoption_fee, availability_status, created_at
-       FROM pets ORDER BY created_at DESC`
+       FROM pets
+       WHERE availability_status != 'Adopted'
+       ORDER BY created_at DESC`
     );
 
     return NextResponse.json({ pets: res.rows });

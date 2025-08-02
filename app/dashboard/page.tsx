@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -40,26 +40,47 @@ export default function UserDashboard() {
     return null;
   }
 
-  const quickStats = [
-    {
-      title: "Saved Pets",
-      value: "12",
-      icon: Heart,
-      color: "text-red-500",
-    },
+  const [quickStats, setQuickStats] = useState([
+    { title: "Saved Pets", value: 0, icon: Heart, color: "text-red-500" },
     {
       title: "Recommendations",
-      value: "8",
+      value: 0,
       icon: Star,
       color: "text-yellow-500",
     },
-    {
-      title: "Applications",
-      value: "3",
-      icon: PawPrint,
-      color: "text-blue-500",
-    },
-  ];
+    { title: "Applications", value: 0, icon: PawPrint, color: "text-blue-500" },
+  ]);
+
+  useEffect(() => {
+    if (user && isUser) {
+      fetch("/api/user/stats", { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setQuickStats([
+              {
+                title: "Saved Pets",
+                value: data.data.savedPets,
+                icon: Heart,
+                color: "text-red-500",
+              },
+              {
+                title: "Recommendations",
+                value: data.data.recommendations,
+                icon: Star,
+                color: "text-yellow-500",
+              },
+              {
+                title: "Applications",
+                value: data.data.applications,
+                icon: PawPrint,
+                color: "text-blue-500",
+              },
+            ]);
+          }
+        });
+    }
+  }, [user, isUser]);
 
   const recentActivity = [
     {
@@ -212,7 +233,7 @@ export default function UserDashboard() {
           </Card>
 
           {/* Recent Activity */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
               <CardDescription>Your latest interactions</CardDescription>
@@ -242,7 +263,7 @@ export default function UserDashboard() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>
